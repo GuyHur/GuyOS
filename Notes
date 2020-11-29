@@ -1,0 +1,20 @@
+Magic number for the bootloader - 0x1badb002
+
+print - 
+for me to print the text to the screen i need to start at memory location 0x68000, each word
+contains 2 bytes which the first one contains the color of the text and the second byte contains the actual char
+
+
+To boot into the OS:
+
+make install
+
+sudo vim /boot/grub/grub.cfg
+write:
+
+### BEGIN GUYKERNEL ###
+menuentry 'Guy's Operating System'{
+    multiboot /boot/mykernel.bin
+    boot
+}
+###END GUYKERNEL ###
