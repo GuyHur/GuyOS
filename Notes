@@ -18,3 +18,12 @@ menuentry 'Guy's Operating System'{
     boot
 }
 ###END GUYKERNEL ###
+
+
+
+
+to run:
+make run
+
+
+Hardware interaction:
