@@ -4,15 +4,12 @@
 
 void printf(char *str)
 {
-    /*
-    printf function
-
-    */
     static uint16_t *VideoMemory = (uint16_t *)0xb8000;
 
     static uint8_t x = 0, y = 0;
 
     for (int i = 0; str[i] != '\0'; i++)
+    // loop until null terminator found
     {
         switch (str[i])
         {
@@ -64,10 +61,9 @@ extern "C" void kernelMain(void *multiboot_structure, uint32_t magicnumber)
     printf("Hello world! --- github.com/GuyHur");
 
     GlobalDescriptorTable gdt;
-    InterruptManager interrupts(&gdt);
-
+    InterruptManager interrupts(0x20, &gdt);
+    
     interrupts.Activate();
 
-    while (1)
-        ;
+    while (1);
 }
