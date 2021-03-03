@@ -2,7 +2,7 @@
 #ifndef _KEYBOARD_H
 #define _KEYBOARD_H
 
-    #include <src/common/types.h>
+    #include <common/types.h>
     #include <hardware/interrupts.h>
     #include <hardware/port.h>
 

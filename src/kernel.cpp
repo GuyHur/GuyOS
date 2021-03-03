@@ -1,7 +1,9 @@
 #include <common/types.h>
-#include <include/gdt.h>
-#include <include/hardware/interrupts.h>
-#include <include/hardware/port.h>
+#include <gdt.h>
+#include <hardware/interrupts.h>
+#include <hardware/port.h>
+#include <drivers/keyboard.h>
+#include <drivers/mouse.h>
 
 void printf(char *str)
 {

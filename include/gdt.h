@@ -6,7 +6,7 @@
     The class GlobalDescriptorTable represents the GDT, while the SegmentDescriptor subclass
     Represents a Segment in the GDT
     */
-#include <src/common/types.h>
+#include <common/types.h>
     class GlobalDescriptorTable
     {
         public:

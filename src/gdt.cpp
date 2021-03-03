@@ -1,4 +1,4 @@
-#include <include/gdt.h>
+#include <gdt.h>
 
 GlobalDescriptorTable::GlobalDescriptorTable()//Constructor
 :   nullSegmentSelector(0,0,0)

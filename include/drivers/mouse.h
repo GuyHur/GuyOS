@@ -1,8 +1,8 @@
 
-#ifndef _KEYBOARD_H
-#define _KEYBOARD_H
+#ifndef _MOUSE_H
+#define _MOUSE_H
 
-    #include <src/common/types.h>
+    #include <common/types.h>
     #include <hardware/interrupts.h>
     #include <hardware/port.h>
 

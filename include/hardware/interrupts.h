@@ -3,8 +3,8 @@
 #define _INTERRUPTMANAGER_H
 
     #include <gdt.h>
-    #include <src/common/types.h>
-    #include <include/hardware/port.h>
+    #include <common/types.h>
+    #include <hardware/port.h>
 
 
     class InterruptManager;

@@ -1,4 +1,4 @@
-#include <include/hardware/interrupts.h>
+#include <hardware/interrupts.h>
 /*
 Interrupt Descriptor Table
 

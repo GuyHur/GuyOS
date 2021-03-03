@@ -4,7 +4,7 @@
 
 .section .text
 
-.extern _ZN16InterruptManager15HandleInterruptEhj
+.extern _ZN16InterruptHandler15HandleInterruptEj
 
 
 .macro HandleException num
@@ -71,20 +71,20 @@ int_bottom:
     pushl %fs
     pushl %gs
 
-    # ring 0 segment register laden
-    #cld
-    #mov $0x10, %eax
-    #mov %eax, %eds
-    #mov %eax, %ees
+    # ring 0 segment register 
+    # cld
+    # mov $0x10, %eax
+    # mov %eax, %eds
+    # mov %eax, %ees
 
-    # C++ Handler aufrufen
+    # C++ Handler function
     pushl %esp
     push (interruptnumber)
     call _ZN16InterruptManager15HandleInterruptEhj
     add %esp, 6
-    mov %eax, %esp # den stack wechseln
+    mov %eax, %esp # stack
 
-    # register laden
+    # register 
     pop %gs
     pop %fs
     pop %es

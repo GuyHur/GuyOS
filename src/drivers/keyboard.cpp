@@ -1,5 +1,5 @@
 
-#include <include/drivers/keyboard.h>
+#include <drivers/keyboard.h>
 
 KeyboardDriver::KeyboardDriver(InterruptManager* manager)
 : InterruptHandler(manager, 0x21),
