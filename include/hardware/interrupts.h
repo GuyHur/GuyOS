@@ -7,6 +7,23 @@
     #include <hardware/port.h>
 
 
+/*
+class InterruptManager -> Manages the interrupts
+ActiveInterruptManager -> Activates the interrupt manager
+handlers -> an array of 256 possible interrupts
+
+
+class InterruptHandler -> handles an interrupt
+
+uint8_t InterruptNumber -> The interrupt number
+InterruptManager* interruptManager -> a pointer to the interruptManager
+uint32_t HandleInterrupt(uint32_t esp) -> handles an interrupt, esp: interrupt
+
+
+
+*/
+
+
     class InterruptManager;
 
     class InterruptHandler

@@ -9,11 +9,20 @@ My attempt in making my own operating system from scratch
 To install:
 
 make clean
+make install
 make run
+
+## Manual
+
+### include
+The include folder has all the header files.
+
+### src
+src contains all the source code for the project.
 
 ## Features
 * 32 bit Protected mode
-* Mouse support
-* Keyboard support
+* Drivers abstraction, Keyboard & mouse support
+* M
 * Dynamic
 
