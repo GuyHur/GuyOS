@@ -14,9 +14,9 @@ objects = obj/loader.o \
           obj/kernel.o
 
 
-run: mykernel.iso
+run: kernel.iso
 	(killall VirtualBox && sleep 1) || true
-	VirtualBox --startvm 'My Operating System' &
+	VBoxManage startvm 'GuyOS' &
 
 obj/%.o: src/%.cpp
 	mkdir -p $(@D)
@@ -26,27 +26,27 @@ obj/%.o: src/%.s
 	mkdir -p $(@D)
 	as $(ASPARAMS) -o $@ $<
 
-mykernel.bin: linker.ld $(objects)
+kernel.bin: linker.ld $(objects)
 	ld $(LDPARAMS) -T $< -o $@ $(objects)
 
-mykernel.iso: mykernel.bin
+kernel.iso: kernel.bin
 	mkdir iso
 	mkdir iso/boot
 	mkdir iso/boot/grub
-	cp mykernel.bin iso/boot/mykernel.bin
-	echo 'set timeout=0'                      > iso/boot/grub/grub.cfg
-	echo 'set default=0'                     >> iso/boot/grub/grub.cfg
-	echo ''                                  >> iso/boot/grub/grub.cfg
-	echo 'menuentry "My Operating System" {' >> iso/boot/grub/grub.cfg
-	echo '  multiboot /boot/mykernel.bin'    >> iso/boot/grub/grub.cfg
-	echo '  boot'                            >> iso/boot/grub/grub.cfg
-	echo '}'                                 >> iso/boot/grub/grub.cfg
-	grub-mkrescue --output=mykernel.iso iso
+	cp kernel.bin iso/boot/kernel.bin
+	echo 'set timeout=0' 				> iso/boot/grub/grub.cfg
+	echo 'set default=0' 				>> iso/boot/grub/grub.cfg
+	echo '' 							>> iso/boot/grub/grub.cfg
+	echo 'menuentry "Guy OS" {' 		>> iso/boot/grub/grub.cfg
+	echo '	multiboot /boot/kernel.bin' >> iso/boot/grub/grub.cfg
+	echo '	boot' 						>> iso/boot/grub/grub.cfg
+	echo '}' 							>> iso/boot/grub/grub.cfg
+	grub-mkrescue --output=kernel.iso iso
 	rm -rf iso
 
-install: mykernel.bin
-	cp $< /boot/mykernel.bin
+install: kernel.bin
+	sudo cp $< /boot/kernel.bin
 
 .PHONY: clean
 clean:
-	rm -f obj mykernel.bin mykernel.iso
+	rm -rf obj kernel.bin kernel.iso

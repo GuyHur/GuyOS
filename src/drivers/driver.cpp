@@ -1,16 +1,18 @@
 #include <drivers/driver.h>
-Driver::Driver(){
-    
+using namespace guyos::drivers;
+
+Driver::Driver()
+{
 }
 
-Driver::~Driver(){
-
+Driver::~Driver()
+{
 }
 
 void Driver::Activate()
 {
-
 }
+
 int Driver::Reset()
 {
     return 0;
@@ -18,7 +20,6 @@ int Driver::Reset()
 
 void Driver::Deactivate()
 {
-
 }
 
 DriverManager::DriverManager()
@@ -26,7 +27,7 @@ DriverManager::DriverManager()
     numDrivers = 0;
 }
 
-void DriverManager::addDriver(Driver * drv)
+void DriverManager::AddDriver(Driver* drv)
 {
     drivers[numDrivers] = drv;
     numDrivers++;

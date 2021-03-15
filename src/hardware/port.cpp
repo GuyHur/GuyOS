@@ -1,4 +1,6 @@
 #include <hardware/port.h>
+using namespace guyos::common;
+using namespace guyos::hardware;
 
 Port::Port(uint16_t portnumber)
 {

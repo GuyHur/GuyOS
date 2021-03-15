@@ -1,38 +1,45 @@
 
-#ifndef _MOUSE_H
-#define _MOUSE_H
+#ifndef __GUYOS__DRIVERS__MOUSE_H
+#define __GUYOS__DRIVERS__MOUSE_H
 
     #include <common/types.h>
     #include <hardware/interrupts.h>
+    #include <drivers/driver.h>
     #include <hardware/port.h>
-
-    class MouseEventHandler
+namespace guyos
+{
+    namespace drivers
     {
+
+    
+        class MouseEventHandler
+        {
+            public:
+                MouseEventHandler();
+                virtual void OnActivate();
+                virtual void OnMouseDown(guyos::common::uint8_t button);
+                virtual void OnMouseUp(guyos::common::uint8_t button);
+                virtual void OnMouseMove(int x, int y);
+        };
+
+
+        class MouseDriver : public guyos::hardware::InterruptHandler, public Driver
+        {
+            guyos::hardware::Port8Bit dataport;
+            guyos::hardware::Port8Bit commandport;
+
+            guyos::common::uint8_t buffer[3];
+            guyos::common::uint8_t offset;
+            guyos::common::uint8_t buttons;
+
+            MouseEventHandler *handler;
+
         public:
-            MouseEventHandler();
-            virtual void OnActivate();
-            virtual void OnMouseDown(uint8_t button);
-            virtual void OnMouseUp(uint8_t button);
-            virtual void OnMouseMove(int x, int y);
-    };
-
-
-    class MouseDriver : public InterruptHandler
-    {
-        Port8Bit dataport;
-        Port8Bit commandport;
-
-        uint8_t buffer[3];
-        uint8_t offset;
-        uint8_t buttons;
-
-        MouseEventHandler *handler;
-
-    public:
-        MouseDriver(InterruptManager* manager, MouseEventHandler *handler);
-        ~MouseDriver();
-        virtual uint32_t HandleInterrupt(uint32_t esp);
-        virtual void Activate();
-    };
-
+            MouseDriver(guyos::hardware::InterruptManager* manager, MouseEventHandler *handler);
+            ~MouseDriver();
+            virtual guyos::common::uint32_t HandleInterrupt(guyos::common::uint32_t esp);
+            virtual void Activate();
+        };
+    }
+}
 #endif

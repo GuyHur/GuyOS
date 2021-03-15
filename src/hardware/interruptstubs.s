@@ -4,20 +4,20 @@
 
 .section .text
 
-.extern _ZN16InterruptHandler15HandleInterruptEj
+.extern _ZN5guyos8hardware16InterruptManager15HandleInterruptEhj
 
 
 .macro HandleException num
-.global _ZN16InterruptManager19HandleException\num\()Ev
-_ZN16InterruptManager19HandleException\num\()Ev:
+.global _ZN5guyos8hardware16InterruptManager19HandleException\num\()Ev
+_ZN5guyos8hardware16InterruptManager19HandleException\num\()Ev:
     movb $\num, (interruptnumber)
     jmp int_bottom
 .endm
 
 
 .macro HandleInterruptRequest num
-.global _ZN16InterruptManager26HandleInterruptRequest\num\()Ev
-_ZN16InterruptManager26HandleInterruptRequest\num\()Ev:
+.global _ZN5guyos8hardware16InterruptManager26HandleInterruptRequest\num\()Ev
+_ZN5guyos8hardware16InterruptManager26HandleInterruptRequest\num\()Ev:
     movb $\num + IRQ_BASE, (interruptnumber)
     jmp int_bottom
 .endm
@@ -62,37 +62,38 @@ HandleInterruptRequest 0x0E
 HandleInterruptRequest 0x0F
 HandleInterruptRequest 0x31
 
-int_bottom:
 
-    # register sichern
+
+int_bottom:
+    # psh registers
     pusha
     pushl %ds
     pushl %es
     pushl %fs
     pushl %gs
 
-    # ring 0 segment register 
-    # cld
-    # mov $0x10, %eax
-    # mov %eax, %eds
-    # mov %eax, %ees
+    # ring 0 segment load registers
+    #cld
+    #mov $0x10, %eax
+    #mov %eax, %eds
+    #mov %eax, %ees
 
     # C++ Handler function
     pushl %esp
     push (interruptnumber)
-    call _ZN16InterruptManager15HandleInterruptEhj
+    call _ZN5guyos8hardware16InterruptManager15HandleInterruptEhj
     add %esp, 6
     mov %eax, %esp # stack
 
-    # register 
+    # load registers
     pop %gs
     pop %fs
     pop %es
     pop %ds
     popa
 
-.global _ZN16InterruptManager15InterruptIgnoreEv
-_ZN16InterruptManager15InterruptIgnoreEv:
+.global _ZN5guyos8hardware16InterruptManager15InterruptIgnoreEv
+_ZN5guyos8hardware16InterruptManager15InterruptIgnoreEv:
 
     iret
 

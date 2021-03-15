@@ -1,66 +1,82 @@
-#ifndef _PCI_H
-#define _PCI_H
+#ifndef __GUYOS__HARDWARE__PCI_H
+#define __GUYOS__HARDWARE__PCI_H
 
 #include <common/types.h>
 #include <hardware/port.h>
+#include <hardware/interrupts.h>
 #include <drivers/driver.h>
-
-    class DeviceDescriptor
+namespace guyos
+{
+    namespace hardware
     {
-        public:
-            uint32_t portBase;
-            uint32_t interrupt;
 
-            uint16_t bus;
-            uint16_t device;
-            uint16_t function;
+        enum BaseAddressRegisterType
+        {
+            MemoryMapping = 0,
+            InputOutput = 1
+        };
 
-            uint16_t vendor_id;
-            uint16_t device_id;
+        class BaseAddressRegister
+        {
+            public:
+                bool prefetchable;
+                guyos::common::uint8_t *address;
+                guyos::common::uint32_t size;
+                BaseAddressRegisterType type;
+        };
 
-            uint8_t class_id;
-            uint8_t subclass_id;
-            uint8_t interface_id;
+        class PeripheralComponentInterconnectDeviceDescriptor
+        {
+            public:
+                guyos::common::uint32_t portBase;
+                guyos::common::uint32_t interrupt;
 
-            uint8_t revision;
+                guyos::common::uint16_t bus;
+                guyos::common::uint16_t device;
+                guyos::common::uint16_t function;
 
-            DeviceDescriptor();
-            //constructor
-            ~DeviceDescriptor();
-            //destructor
+                guyos::common::uint16_t vendor_id;
+                guyos::common::uint16_t device_id;
 
+                guyos::common::uint8_t class_id;
+                guyos::common::uint8_t subclass_id;
+                guyos::common::uint8_t interface_id;
 
-    };
+                guyos::common::uint8_t revision;
 
-    class PCI
-    {
-        Port32Bit dataPort;
-        Port32Bit commandPort;
-
-        public:
-            PCI();
-            ~PCI();
-
-            uint32_t Read(uint16_t bus, uint16_t device, uint16_t function, uint32_t registeroffset);
-
-            void Write(uint16_t bus, uint16_t device, uint16_t function, uint32_t registeroffset, uint32_t value);
-
-            bool DeviceHasFunctions(uint16_t bus, uint16_t device);
-
-            void SelectDrivers(DriverManager *driverManager);
-
-            DeviceDescriptor GetDeviceDescriptor(uint16_t bus, uint16_t device, uint16_t function);
-
-    };
+                PeripheralComponentInterconnectDeviceDescriptor();
+                    //constructor
+                ~PeripheralComponentInterconnectDeviceDescriptor();
+                    //destructor
 
 
+        };
 
+            class PeripheralComponentInterconnectController
+            {
+                Port32Bit dataPort;
+                Port32Bit commandPort;
 
+                public:
+                    PeripheralComponentInterconnectController();
 
+                    ~PeripheralComponentInterconnectController();
 
+                    guyos::common::uint32_t Read(guyos::common::uint16_t bus, guyos::common::uint16_t device, guyos::common::uint16_t function, guyos::common::uint32_t registeroffset);
 
+                    void Write(guyos::common::uint16_t bus, guyos::common::uint16_t device, guyos::common::uint16_t function, guyos::common::uint32_t registeroffset, guyos::common::uint32_t value);
 
+                    bool DeviceHasFunctions(guyos::common::uint16_t bus, guyos::common::uint16_t device);
 
+                    void SelectDrivers(guyos::drivers::DriverManager *driverManager, guyos::hardware::InterruptManager* interrupts);
 
+                    guyos::drivers::Driver* GetDriver(PeripheralComponentInterconnectDeviceDescriptor dev, guyos::hardware::InterruptManager* interrupts);
+                
+                    PeripheralComponentInterconnectDeviceDescriptor GetDeviceDescriptor(guyos::common::uint16_t bus, guyos::common::uint16_t device, guyos::common::uint16_t function);
 
+                    BaseAddressRegister GetBaseAddressRegister(guyos::common::uint16_t bus, guyos::common::uint16_t device, guyos::common::uint16_t function, guyos::common::uint16_t bar);
+
+            };
+    }
+}
 #endif

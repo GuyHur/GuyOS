@@ -1,5 +1,8 @@
-
 #include <drivers/mouse.h>
+
+using namespace guyos::drivers;
+using namespace guyos::common;
+using namespace guyos::hardware;
 
 void printf(char*);
 
@@ -24,13 +27,16 @@ void printf(char*);
     }
 
 
-MouseDriver::MouseDriver(InterruptManager* manager, MouseEventHandler *handler)
-: InterruptHandler(manager, 0x2C),
-dataport(0x60),
-commandport(0x64)
-{
-    this-> handler = handler;
-}
+    MouseDriver::MouseDriver(InterruptManager* manager, MouseEventHandler *handler)
+    : InterruptHandler(manager, 0x2C),
+    dataport(0x60),
+    commandport(0x64)
+    {
+        this-> handler = handler;
+    }
+    MouseDriver::~MouseDriver()
+    {
+    }
 
 void MouseDriver::Activate(){
     offset = 0;
@@ -50,11 +56,6 @@ void MouseDriver::Activate(){
     dataport.Read();
 }
 
-MouseDriver::~MouseDriver()
-{
-}
-
-void printf(char*);
 
 uint32_t MouseDriver::HandleInterrupt(uint32_t esp)
 {
@@ -63,14 +64,18 @@ uint32_t MouseDriver::HandleInterrupt(uint32_t esp)
         return esp;
 
     buffer [offset] = dataport.Read();
+    
+    if(handler ==0)
+        return esp;
+    
     offset = (offset + 1) % 3;
 
     if(offset == 0)
     {
         if(buffer[1] != 0 || buffer[2] != 0)
-                {
-                    handler->OnMouseMove((int8_t)buffer[1], -((int8_t)buffer[2]));
-                }
+            {
+                    handler->OnMouseMove(buffer[1], -buffer[2]);
+            }
 
                 for(uint8_t i = 0; i < 3; i++)
                 {
@@ -82,7 +87,7 @@ uint32_t MouseDriver::HandleInterrupt(uint32_t esp)
                             handler->OnMouseDown(i+1);
                     }
                 }
-    buttons = buffer[0];
+        buttons = buffer[0];
     }
     
     return esp;

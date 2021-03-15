@@ -1,5 +1,8 @@
 
 #include <drivers/keyboard.h>
+using namespace guyos::drivers;
+using namespace guyos::common;
+using namespace guyos::hardware;
 
 KeyboardEventHandler::KeyboardEventHandler()
 {
@@ -27,6 +30,11 @@ commandport(0x64)
     this->handler = handler;
 }
 
+
+KeyboardDriver::~KeyboardDriver()
+{
+}
+
 void KeyboardDriver::Activate()
 {
     while(commandport.Read() & 0x1)
@@ -39,11 +47,8 @@ void KeyboardDriver::Activate()
     dataport.Write(0xf4);
 }
 
-KeyboardDriver::~KeyboardDriver()
-{
-}
-
 void printf(char*);
+void printfHex(uint8_t);
 
 uint32_t KeyboardDriver::HandleInterrupt(uint32_t esp)
 {
@@ -104,11 +109,8 @@ uint32_t KeyboardDriver::HandleInterrupt(uint32_t esp)
 
             default:
             {
-                char* foo = "KEYBOARD 0x00 ";
-                char* hex = "0123456789ABCDEF";
-                foo[11] = hex[(key >> 4) & 0xF];
-                foo[12] = hex[key & 0xF];
-                printf(foo);
+                printf("KEYBOARD 0x");
+                printfHex(key);
                 break;
             }
         }

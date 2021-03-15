@@ -1,5 +1,5 @@
-#ifndef _GDT_H
-#define _GDT_H
+#ifndef __GUYOS__GDT_H
+#define __GUYOS__GDT_H
 
     /*
     To understand this code please learn about GDT(Global Descriptor table)
@@ -7,40 +7,45 @@
     Represents a Segment in the GDT
     */
 #include <common/types.h>
+
+namespace guyos
+{
+    
     class GlobalDescriptorTable
     {
         public:
+
             class SegmentDescriptor
             {
                 private:
-                    uint16_t limit_lo;
-                    uint16_t base_lo;
-                    uint8_t base_hi;
-                    uint8_t type;
-                    uint8_t flags_limit_hi;
-                    uint8_t base_vhi;
+                    guyos::common::uint16_t limit_lo;
+                    guyos::common::uint16_t base_lo;
+                    guyos::common::uint8_t base_hi;
+                    guyos::common::uint8_t type;
+                    guyos::common::uint8_t limit_hi;
+                    guyos::common::uint8_t base_vhi;
+
                 public:
-                    SegmentDescriptor(uint32_t base, uint32_t limit, uint8_t type);
+                    SegmentDescriptor(guyos::common::uint32_t base, guyos::common::uint32_t limit, guyos::common::uint8_t type);
+                    guyos::common::uint32_t Base();
+                    guyos::common::uint32_t Limit();
+            } __attribute__((packed));
 
-                    uint32_t Base(); // Mangales with stuff to get the low bits & high bits
+        private:
+            SegmentDescriptor nullSegmentSelector;
+            SegmentDescriptor unusedSegmentSelector;
+            SegmentDescriptor codeSegmentSelector;
+            SegmentDescriptor dataSegmentSelector;
 
-                    uint32_t Limit(); // gets the limit.
+        public:
 
-            }__attribute__((packed));//Prevents compiler from moving stuff around
-        
-        SegmentDescriptor nullSegmentSelector;
-        SegmentDescriptor codeSegmentSelector;
-        SegmentDescriptor dataSegmentSelector;
-        SegmentDescriptor unusedSegmentSelector;
-    public:
-        GlobalDescriptorTable(); // Constructor
-        ~GlobalDescriptorTable();// Destructor
-        uint16_t CodeSegmentSelector();
-        uint16_t DataSegmentSelector();
+            GlobalDescriptorTable();
+            ~GlobalDescriptorTable();
 
+            guyos::common::uint16_t CodeSegmentSelector();
+            guyos::common::uint16_t DataSegmentSelector();
     };
 
-
-
-
+}
+    
 #endif

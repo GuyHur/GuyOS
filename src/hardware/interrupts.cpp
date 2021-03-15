@@ -1,4 +1,6 @@
 #include <hardware/interrupts.h>
+using namespace guyos::common;
+using namespace guyos::hardware;
 /*
 Interrupt Descriptor Table
 
@@ -11,6 +13,10 @@ Guy Hrushovski
 */
 
 void printf(char* str);
+void printfHex(uint8_t);
+
+
+
 
 
 InterruptHandler::InterruptHandler(InterruptManager* interruptManager, uint8_t InterruptNumber)
@@ -30,6 +36,7 @@ uint32_t InterruptHandler::HandleInterrupt(uint32_t esp)
 {
     return esp;
 }
+
 
 
 InterruptManager::GateDescriptor InterruptManager::interruptDescriptorTable[256];
@@ -128,10 +135,7 @@ InterruptManager::InterruptManager(uint16_t hardwareInterruptOffset, GlobalDescr
     InterruptDescriptorTablePointer idt_pointer;
     idt_pointer.size  = 256*sizeof(GateDescriptor) - 1;
     idt_pointer.base  = (uint32_t)interruptDescriptorTable;
-    asm volatile("lidt %0" 
-    : 
-    : 
-    "m" (idt_pointer));
+    asm volatile("lidt %0" : : "m" (idt_pointer));
 }
 
 InterruptManager::~InterruptManager()
@@ -178,11 +182,8 @@ uint32_t InterruptManager::DoHandleInterrupt(uint8_t interrupt, uint32_t esp)
     }
     else if(interrupt != hardwareInterruptOffset)
     {
-        char* foo = "UNHANDLED INTERRUPT 0x00";
-        char* hex = "0123456789ABCDEF";
-        foo[22] = hex[(interrupt >> 4) & 0xF];
-        foo[23] = hex[interrupt & 0xF];
-        printf(foo);
+        printf("UNHANDLED INTERRUPT 0x");
+        printfHex(interrupt);
     }
 
     // hardware interrupts must be acknowledged
