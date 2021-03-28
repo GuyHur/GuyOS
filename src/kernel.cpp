@@ -5,11 +5,14 @@
 #include <drivers/driver.h>
 #include <drivers/keyboard.h>
 #include <drivers/mouse.h>
+#include <drivers/vga.h>
+#include <multitasking.h>
 
 using namespace guyos;
 using namespace guyos::common;
 using namespace guyos::drivers;
 using namespace guyos::hardware;
+
 
 void printf(char* str)
 {
@@ -108,6 +111,22 @@ public:
 };
 
 
+void taskA()
+{
+    while(true)
+        printf("alon");
+}
+
+void taskB()
+{
+    while(true)
+        printf("noob");
+}
+
+
+
+
+
 typedef void (*constructor)();
 extern "C" constructor start_ctors;
 extern "C" constructor end_ctors;
@@ -124,7 +143,14 @@ extern "C" void kernelMain(const void *multiboot_structure, uint32_t /*multiboot
     printf("Welcome to GuyOS!\n");
 
     GlobalDescriptorTable gdt;
-    InterruptManager interrupts(0x20, &gdt);
+
+    TaskManager taskManager;
+    Task task1(&gdt, taskA);
+    Task task2(&gdt, taskB);
+    taskManager.AddTask(&task1);
+    taskManager.AddTask(&task2);
+
+    InterruptManager interrupts(0x20, &gdt, &taskManager);
 
     printf("Initializing Hardware, Stage 1\n");
 
@@ -140,6 +166,7 @@ extern "C" void kernelMain(const void *multiboot_structure, uint32_t /*multiboot
 
     PeripheralComponentInterconnectController PCIController;
     PCIController.SelectDrivers(&drvManager, &interrupts);
+    VGA vga;
 
     printf("Initializing hardware, stage 2\n");
 
@@ -147,6 +174,10 @@ extern "C" void kernelMain(const void *multiboot_structure, uint32_t /*multiboot
 
     printf("Activating interrupts, stage 3 \n");
     interrupts.Activate();
+    /*vga.SetMode(320,200,8);
+    for(int32_t y = 0; y < 200; y++)
+        for(int32_t x = 0; x < 320; x++)
+            vga.PutPixel(x, y, 0x00, 0x00, 0xA8);*/
 
     while(1);
 }

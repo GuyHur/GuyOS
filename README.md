@@ -8,6 +8,15 @@ Pull requests are welcome!
 
 ![Image of the OS with interrupts, keyboard&mouse](screenshot.png)
 
+## Features
+* 32 bit Protected mode
+* Dynamic drivers support, to add more drivers in the future
+* Keyboard and mouse support
+* Basic GUI framework
+* Multitasking
+* Memory Management
+
+
 ## Requirements
 
 * Linux Host System(Tested on Ubuntu 20.04)
@@ -36,20 +45,12 @@ make
 Link the Virtual machine you created to the ISO image
 
 
-## Features
-* 32 bit Protected mode
-* Dynamic drivers support, to add more drivers in the future
-* Keyboard and mouse support
-* Basic terminal
-* Dynamic
-
 ## Current Goals
 Here are the goals for the future.
 
-* Implement Networking
-* GUI
-* Simple programs.
-* extended libc
+* Support Networking
+* A better GUI Framework
+* Build an extended libc
 
 ## Project Structure
 
@@ -78,6 +79,9 @@ The main kernel function, here everything is initialized and the main routine ke
 
 #### gdt.cpp
 Code for the GDT(Global descriptor table)
+
+#### multitasking.cpp
+Multitasking
 
 #### /drivers
 Source code for the drivers

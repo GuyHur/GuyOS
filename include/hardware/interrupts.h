@@ -4,6 +4,7 @@
 
 #include <gdt.h>
 #include <common/types.h>
+#include <multitasking.h>
 #include <hardware/port.h>
 
 
@@ -49,6 +50,7 @@ namespace guyos
 
                 static InterruptManager* ActiveInterruptManager;
                 InterruptHandler* handlers[256];
+                TaskManager *taskManager;
 
                 struct GateDescriptor
                 {
@@ -123,7 +125,7 @@ namespace guyos
                 Port8BitSlow programmableInterruptControllerSlaveDataPort;
 
             public:
-                InterruptManager(guyos::common::uint16_t hardwareInterruptOffset, guyos::GlobalDescriptorTable* globalDescriptorTable);
+                InterruptManager(guyos::common::uint16_t hardwareInterruptOffset, guyos::GlobalDescriptorTable* globalDescriptorTable, guyos::TaskManager *taskManager);
                 ~InterruptManager();
                 guyos::common::uint16_t HardwareInterruptOffset();
                 void Activate();

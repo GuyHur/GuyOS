@@ -11,6 +11,8 @@ objects = obj/loader.o \
           obj/drivers/mouse.o \
 		  obj/drivers/driver.o \
 		  obj/hardware/pci.o \
+		  obj/drivers/vga.o \
+		  obj/multitasking.o \
           obj/kernel.o
 
 
