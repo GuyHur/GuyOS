@@ -1,23 +1,34 @@
 #include <hardware/pci.h>
+#include <drivers/amd_am79c973.h>
 using namespace guyos::common;
 using namespace guyos::drivers;
 using namespace guyos::hardware;
 
-PeripheralComponentInterconnectDeviceDescriptor::PeripheralComponentInterconnectDeviceDescriptor(){
+
+PeripheralComponentInterconnectDeviceDescriptor::PeripheralComponentInterconnectDeviceDescriptor()
+{
 }
 
-PeripheralComponentInterconnectDeviceDescriptor::~PeripheralComponentInterconnectDeviceDescriptor(){
-
+PeripheralComponentInterconnectDeviceDescriptor::~PeripheralComponentInterconnectDeviceDescriptor()
+{
 }
 
-PeripheralComponentInterconnectController::PeripheralComponentInterconnectController():dataPort(0xCFC),commandPort(0xCF8)
+
+
+
+
+
+
+PeripheralComponentInterconnectController::PeripheralComponentInterconnectController()
+: dataPort(0xCFC),
+  commandPort(0xCF8)
 {
 }
 
 PeripheralComponentInterconnectController::~PeripheralComponentInterconnectController()
 {
-
 }
+
 uint32_t PeripheralComponentInterconnectController::Read(uint16_t bus, uint16_t device, uint16_t function, uint32_t registeroffset)
 {
     uint32_t id =
@@ -31,7 +42,6 @@ uint32_t PeripheralComponentInterconnectController::Read(uint16_t bus, uint16_t 
     return result >> (8* (registeroffset % 4));
 }
 
-
 void PeripheralComponentInterconnectController::Write(uint16_t bus, uint16_t device, uint16_t function, uint32_t registeroffset, uint32_t value)
 {
     uint32_t id =
@@ -44,15 +54,16 @@ void PeripheralComponentInterconnectController::Write(uint16_t bus, uint16_t dev
     dataPort.Write(value); 
 }
 
-void printf(char * str);
-void printfHex(uint8_t);
-
-bool PeripheralComponentInterconnectController::DeviceHasFunctions(uint16_t bus, uint16_t device)
+bool PeripheralComponentInterconnectController::DeviceHasFunctions(common::uint16_t bus, common::uint16_t device)
 {
     return Read(bus, device, 0, 0x0E) & (1<<7);
 }
 
-void PeripheralComponentInterconnectController::SelectDrivers(DriverManager *driverManager, guyos::hardware::InterruptManager *interrupts)
+
+void printf(char* str);
+void printfHex(uint8_t);
+
+void PeripheralComponentInterconnectController::SelectDrivers(DriverManager* driverManager, guyos::hardware::InterruptManager* interrupts)
 {
     for(int bus = 0; bus < 8; bus++)
     {
@@ -66,16 +77,18 @@ void PeripheralComponentInterconnectController::SelectDrivers(DriverManager *dri
                 if(dev.vendor_id == 0x0000 || dev.vendor_id == 0xFFFF)
                     continue;
                 
+                
                 for(int barNum = 0; barNum < 6; barNum++)
                 {
                     BaseAddressRegister bar = GetBaseAddressRegister(bus, device, function, barNum);
                     if(bar.address && (bar.type == InputOutput))
                         dev.portBase = (uint32_t)bar.address;
-                    
-                    Driver *driver = GetDriver(dev, interrupts);
-                    if(driver != 0)
-                        driverManager->AddDriver(driver);
                 }
+                
+                Driver* driver = GetDriver(dev, interrupts);
+                if(driver != 0)
+                    driverManager->AddDriver(driver);
+
                 
                 printf("PCI BUS ");
                 printfHex(bus & 0xFF);
@@ -97,6 +110,7 @@ void PeripheralComponentInterconnectController::SelectDrivers(DriverManager *dri
         }
     }
 }
+
 
 BaseAddressRegister PeripheralComponentInterconnectController::GetBaseAddressRegister(uint16_t bus, uint16_t device, uint16_t function, uint16_t bar)
 {
@@ -138,15 +152,22 @@ BaseAddressRegister PeripheralComponentInterconnectController::GetBaseAddressReg
     return result;
 }
 
+
+
 Driver* PeripheralComponentInterconnectController::GetDriver(PeripheralComponentInterconnectDeviceDescriptor dev, InterruptManager* interrupts)
 {
+    Driver* driver = 0;
     switch(dev.vendor_id)
     {
         case 0x1022: // AMD
             switch(dev.device_id)
             {
                 case 0x2000: // am79c973
+                    driver = (amd_am79c973*)MemoryManager::activeMemoryManager->malloc(sizeof(amd_am79c973));
+                    if(driver != 0)
+                        new (driver) amd_am79c973(&dev, interrupts);
                     printf("AMD am79c973 ");
+                    return driver;
                     break;
             }
             break;
@@ -169,8 +190,9 @@ Driver* PeripheralComponentInterconnectController::GetDriver(PeripheralComponent
     }
     
     
-    return 0;
+    return driver;
 }
+
 
 
 PeripheralComponentInterconnectDeviceDescriptor PeripheralComponentInterconnectController::GetDeviceDescriptor(uint16_t bus, uint16_t device, uint16_t function)

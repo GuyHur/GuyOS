@@ -13,9 +13,13 @@ namespace guyos
 
         typedef int int32_t;
         typedef unsigned int uint32_t;
+
         typedef long long int int64_t;
         typedef unsigned long long int uint64_t;
+        
         typedef const char * string;
+
+        typedef uint32_t size_t;
     }
 }
 

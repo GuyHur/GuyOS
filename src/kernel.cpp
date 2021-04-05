@@ -7,6 +7,9 @@
 #include <drivers/mouse.h>
 #include <drivers/vga.h>
 #include <multitasking.h>
+#include <drivers/amd_am79c973.h>
+#include <memory.h>
+#include <drivers/ata.h>
 
 using namespace guyos;
 using namespace guyos::common;
@@ -58,6 +61,19 @@ void printfHex(uint8_t key)
     foo[0] = hex[(key >> 4) & 0xF];
     foo[1] = hex[key & 0xF];
     printf(foo);
+}
+
+void printfHex16(uint16_t key)
+{
+    printfHex((key >> 8) & 0xFF);
+    printfHex( key & 0xFF);
+}
+void printfHex32(uint32_t key)
+{
+    printfHex((key >> 24) & 0xFF);
+    printfHex((key >> 16) & 0xFF);
+    printfHex((key >> 8) & 0xFF);
+    printfHex( key & 0xFF);
 }
 
 
@@ -144,12 +160,31 @@ extern "C" void kernelMain(const void *multiboot_structure, uint32_t /*multiboot
 
     GlobalDescriptorTable gdt;
 
+    uint32_t* memupper = (uint32_t*)(((size_t)multiboot_structure) + 8);
+    size_t heap = 10*1024*1024;
+    MemoryManager memoryManager(heap, (*memupper)*1024 - heap - 10*1024);
+
+    printf("heap: 0x");
+    printfHex((heap >> 24) & 0xFF);
+    printfHex((heap >> 16) & 0xFF);
+    printfHex((heap >> 8 ) & 0xFF);
+    printfHex((heap      ) & 0xFF);
+
+    void* allocated = memoryManager.malloc(1024);
+    printf("\nallocated: 0x");
+    printfHex(((size_t)allocated >> 24) & 0xFF);
+    printfHex(((size_t)allocated >> 16) & 0xFF);
+    printfHex(((size_t)allocated >> 8 ) & 0xFF);
+    printfHex(((size_t)allocated      ) & 0xFF);
+    printf("\n");
+
     TaskManager taskManager;
+    /*
     Task task1(&gdt, taskA);
     Task task2(&gdt, taskB);
     taskManager.AddTask(&task1);
     taskManager.AddTask(&task2);
-
+    */
     InterruptManager interrupts(0x20, &gdt, &taskManager);
 
     printf("Initializing Hardware, Stage 1\n");
@@ -173,11 +208,34 @@ extern "C" void kernelMain(const void *multiboot_structure, uint32_t /*multiboot
     drvManager.ActivateAll();
 
     printf("Activating interrupts, stage 3 \n");
-    interrupts.Activate();
-    /*vga.SetMode(320,200,8);
-    for(int32_t y = 0; y < 200; y++)
-        for(int32_t x = 0; x < 320; x++)
-            vga.PutPixel(x, y, 0x00, 0x00, 0xA8);*/
 
+    printf("\nS-ATA primary master: ");
+    ATA ata0m(true, 0x1F0);
+    ata0m.Identify();
+
+    printf("\nS-ATA primary slave: ");
+    ATA ata0s(false, 0x1F0);
+    ata0s.Identify();
+    ata0s.Write28(0, (uint8_t*)"TestGuy", 7);
+    ata0s.Flush();
+    ata0s.Read28(0);
+
+    printf("\nS-ATA secondary master: ");
+    ATA ata1m(true, 0x170);
+    ata1m.Identify();
+
+    printf("\nS-ATA secondary slave: ");
+    ATA ata1s(false, 0x170);
+    ata1s.Identify();
+
+    // third: 0x1E8
+    // fourth: 0x168
+
+
+
+    amd_am79c973* eth0 = (amd_am79c973*)(drvManager.drivers[2]);
+    eth0->Send((uint8_t*)"Hello Network", 13);
+
+    interrupts.Activate();
     while(1);
 }

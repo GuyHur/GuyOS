@@ -18,7 +18,7 @@ class InterruptHandler -> handles an interrupt
 
 uint8_t InterruptNumber -> The interrupt number
 InterruptManager* interruptManager -> a pointer to the interruptManager
-uint32_t HandleInterrupt(uint32_t esp) -> handles an interrupt, esp: interrupt
+uint32_t HandleInterrupt(uint32_t esp) -> handles an interrupt, esp: stack pointer
 
 
 

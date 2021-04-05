@@ -5,6 +5,8 @@
 #include <hardware/port.h>
 #include <hardware/interrupts.h>
 #include <drivers/driver.h>
+#include <memory.h>
+
 namespace guyos
 {
     namespace hardware
