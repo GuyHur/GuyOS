@@ -7,7 +7,10 @@
 #include <drivers/mouse.h>
 #include <drivers/vga.h>
 #include <multitasking.h>
+#include <net/arp.h>
+#include <syscalls.h>
 #include <drivers/amd_am79c973.h>
+#include <net/etherframe.h>
 #include <memory.h>
 #include <drivers/ata.h>
 
@@ -15,6 +18,7 @@ using namespace guyos;
 using namespace guyos::common;
 using namespace guyos::drivers;
 using namespace guyos::hardware;
+using namespace guyos::net;
 
 
 void printf(char* str)
@@ -126,21 +130,23 @@ public:
     
 };
 
+void sysprintf(char *str)
+{
+    asm("int $0x80" : : "a" (4), "b" (str));
+}
+
 
 void taskA()
 {
     while(true)
-        printf("alon");
+        sysprintf("alon");
 }
 
 void taskB()
 {
     while(true)
-        printf("noob");
+        sysprintf("noob");
 }
-
-
-
 
 
 typedef void (*constructor)();
@@ -179,13 +185,14 @@ extern "C" void kernelMain(const void *multiboot_structure, uint32_t /*multiboot
     printf("\n");
 
     TaskManager taskManager;
-    /*
-    Task task1(&gdt, taskA);
-    Task task2(&gdt, taskB);
-    taskManager.AddTask(&task1);
-    taskManager.AddTask(&task2);
-    */
+    
+    //Task task1(&gdt, taskA);
+    //Task task2(&gdt, taskB);
+    //taskManager.AddTask(&task1);
+    //taskManager.AddTask(&task2);
+    
     InterruptManager interrupts(0x20, &gdt, &taskManager);
+    SyscallHandler syscalls(&interrupts, 0x80);
 
     printf("Initializing Hardware, Stage 1\n");
 
@@ -208,7 +215,7 @@ extern "C" void kernelMain(const void *multiboot_structure, uint32_t /*multiboot
     drvManager.ActivateAll();
 
     printf("Activating interrupts, stage 3 \n");
-
+    /*
     printf("\nS-ATA primary master: ");
     ATA ata0m(true, 0x1F0);
     ata0m.Identify();
@@ -218,7 +225,7 @@ extern "C" void kernelMain(const void *multiboot_structure, uint32_t /*multiboot
     ata0s.Identify();
     ata0s.Write28(0, (uint8_t*)"TestGuy", 7);
     ata0s.Flush();
-    ata0s.Read28(0);
+    ata0s.Read28(0, 25);
 
     printf("\nS-ATA secondary master: ");
     ATA ata1m(true, 0x170);
@@ -230,12 +237,36 @@ extern "C" void kernelMain(const void *multiboot_structure, uint32_t /*multiboot
 
     // third: 0x1E8
     // fourth: 0x168
+    */
 
+    uint8_t ip1 = 10, ip2 = 0, ip3 = 2, ip4 = 15;
+    uint32_t ip_be = ((uint32_t)ip4 << 24)
+                | ((uint32_t)ip3 << 16)
+                | ((uint32_t)ip2 << 8)
+                | (uint32_t)ip1;
+
+    uint8_t gip1 = 10, gip2 = 0, gip3 = 2, gip4 = 2;
+    uint32_t gip_be = ((uint32_t)gip4 << 24)
+                   | ((uint32_t)gip3 << 16)
+                   | ((uint32_t)gip2 << 8)
+                   | (uint32_t)gip1;
 
 
     amd_am79c973* eth0 = (amd_am79c973*)(drvManager.drivers[2]);
-    eth0->Send((uint8_t*)"Hello Network", 13);
+
+    eth0->SetIPAddress(ip_be);
+
+    EtherFrameProvider etherframe(eth0);
+
+    AddressResolutionProtocol arp(&etherframe);    
+
+    //eth0->Send((uint8_t*)"Hello Network", 13);
+
 
     interrupts.Activate();
+
+    printf("\n\n\n\n\n\n\n\n");
+    arp.Resolve(gip_be);
+
     while(1);
 }

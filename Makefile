@@ -8,10 +8,13 @@ objects = obj/loader.o \
           obj/hardware/port.o \
           obj/hardware/interruptstubs.o \
           obj/hardware/interrupts.o \
+		  obj/syscalls.o \
 		  obj/multitasking.o \
 		  obj/drivers/amd_am79c973.o \
 		  obj/hardware/pci.o \
           obj/drivers/keyboard.o \
+		  obj/net/etherframe.o \
+		  obj/net/arp.o \
           obj/drivers/mouse.o \
 		  obj/drivers/driver.o \
 		  obj/drivers/ata.o \
