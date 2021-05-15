@@ -15,6 +15,7 @@ objects = obj/loader.o \
           obj/drivers/keyboard.o \
 		  obj/net/etherframe.o \
 		  obj/net/arp.o \
+		  obj/net/ipv4.o \
           obj/drivers/mouse.o \
 		  obj/drivers/driver.o \
 		  obj/drivers/ata.o \

@@ -1,5 +1,8 @@
 #ifndef __GUYOS__MEMORY_H
 #define __GUYOS__MEMORY_H
+
+#include <common/types.h>
+
 /*
 
 RAM structure:
@@ -11,9 +14,6 @@ bool allocated
 size_t size
 
 */
-
-#include <common/types.h>
-
 
 namespace guyos
 {

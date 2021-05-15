@@ -5,6 +5,19 @@
 #include <drivers/amd_am79c973.h>
 #include <memory.h>
 
+/*
+
+Ethernet implementation
+dstMAC_BE -> Destination MAC address
+srcMAC_BE -> source MAC address
+etherType_BE -> type of the data for example:
+0x800 -> send the data to the ipv4 handler
+0x806 -> send the frame to the ARP handler
+*/
+
+
+
+
 namespace guyos
 {
     namespace net
@@ -14,7 +27,7 @@ namespace guyos
             common::uint64_t dstMAC_BE : 48;
             common::uint64_t srcMAC_BE : 48;
             common::uint16_t etherType_BE;
-        } __attribute__ ((packed));
+        } __attribute__((packed));
         typedef common::uint32_t EtherFrameFooter;
 
         class EtherFrameProvider;
@@ -29,7 +42,7 @@ namespace guyos
             EtherFrameHandler(EtherFrameProvider* backend, common::uint16_t etherType);
             ~EtherFrameHandler();
 
-            bool OnEtherFrameReceived(common::uint8_t* etherframePayload, common::uint32_t size);
+            virtual bool OnEtherFrameReceived(common::uint8_t* etherframePayload, common::uint32_t size);
             void Send(common::uint64_t dstMAC_BE, common::uint8_t* etherframePayload, common::uint32_t size);
 
         };
