@@ -54,7 +54,7 @@ namespace guyos
         };
 
 
-        class InternetProtocolProvider : EtherFrameHandler
+        class InternetProtocolProvider : public EtherFrameHandler
         {
         friend class InternetProtocolHandler;
         protected:

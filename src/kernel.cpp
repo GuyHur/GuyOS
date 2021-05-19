@@ -9,12 +9,15 @@
 #include <multitasking.h>
 #include <net/arp.h>
 #include <syscalls.h>
+#include <memory.h>
+#include <drivers/ata.h>
+
 #include <drivers/amd_am79c973.h>
 #include <net/etherframe.h>
 #include <net/arp.h>
 #include <net/ipv4.h>
-#include <memory.h>
-#include <drivers/ata.h>
+#include <net/icmp.h>
+
 
 using namespace guyos;
 using namespace guyos::common;
@@ -91,7 +94,7 @@ public:
     void OnKeyDown(char c)
     {
         char* foo = " ";
-        foo[0] = c;
+        foo[0] = c;   
         printf(foo);
     }
 };
@@ -193,24 +196,24 @@ extern "C" void kernelMain(const void *multiboot_structure, uint32_t /*multiboot
     //taskManager.AddTask(&task1);
     //taskManager.AddTask(&task2);
     
-    InterruptManager interrupts(0x20, &gdt, &taskManager);
-    SyscallHandler syscalls(&interrupts, 0x80);
+    InterruptManager interrupts(0x20, &gdt, &taskManager);//interrupt manager
+    SyscallHandler syscalls(&interrupts, 0x80);// syscalls
 
     printf("Initializing Hardware, Stage 1\n");
 
-    DriverManager drvManager;
+    DriverManager drvManager;// driver manager
 
-    PrintfKeyboardEventHandler keyboardhandler;
-    KeyboardDriver keyboard(&interrupts, &keyboardhandler);
+    PrintfKeyboardEventHandler keyboardhandler;// keyboard terminal
+    KeyboardDriver keyboard(&interrupts, &keyboardhandler);//keyboard driver
     drvManager.AddDriver(&keyboard);
 
-    MouseToConsole mousehandler;
-    MouseDriver mouse(&interrupts, &mousehandler);
+    MouseToConsole mousehandler;// mouse terminal
+    MouseDriver mouse(&interrupts, &mousehandler);// mouse driver
     drvManager.AddDriver(&mouse);
 
-    PeripheralComponentInterconnectController PCIController;
+    PeripheralComponentInterconnectController PCIController;// PCI driver
     PCIController.SelectDrivers(&drvManager, &interrupts);
-    VGA vga;
+    VGA vga;// VGA driver
 
     printf("Initializing hardware, stage 2\n");
 
@@ -244,7 +247,7 @@ extern "C" void kernelMain(const void *multiboot_structure, uint32_t /*multiboot
    //ip address
     amd_am79c973* eth0 = (amd_am79c973*)(drvManager.drivers[2]);
 
-    uint8_t ip1 = 10, ip2 = 0, ip3 = 2, ip4 = 15;
+    uint8_t ip1 = 10, ip2 = 0, ip3 = 2, ip4 = 15;// 10.0.2.15
     uint32_t ip_be = ((uint32_t)ip4 << 24)
                 | ((uint32_t)ip3 << 16)
                 | ((uint32_t)ip2 << 8)
@@ -267,15 +270,18 @@ extern "C" void kernelMain(const void *multiboot_structure, uint32_t /*multiboot
                    | ((uint32_t)subnet3 << 16)
                    | ((uint32_t)subnet2 << 8)
                    | (uint32_t)subnet1;
-    InternetProtocolProvider ipv4(&etherframe, &arp, gip_be, subnet_be);    
+    InternetProtocolProvider ipv4(&etherframe, &arp, gip_be, subnet_be); 
+    InternetControlMessageProtocol icmp(&ipv4);   
 
     //eth0->Send((uint8_t*)"Hello Network", 13);
 
 
     interrupts.Activate();
 
-    printf("\n\n\n\n\n\n\n\n");
-    ipv4.Send(gip_be, 0x0008, (uint8_t*) "testhello", 9)
+    printf("\n\n\n\n\n\n\n\n\n\n");
+
+    arp.BroadcastMACAddress(gip_be);
+    icmp.RequestEchoReply(gip_be);
 
     while(1);
 }

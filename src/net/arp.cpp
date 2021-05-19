@@ -58,6 +58,24 @@ bool AddressResolutionProtocol::OnEtherFrameReceived(uint8_t* etherframePayload,
     return false;
 }
 
+void AddressResolutionProtocol::BroadcastMACAddress(uint32_t IP_BE)
+{
+    AddressResolutionProtocolMessage arp;
+    arp.hardwareType = 0x0100; // ethernet
+    arp.protocol = 0x0008; // ipv4
+    arp.hardwareAddressSize = 6; // mac
+    arp.protocolAddressSize = 4; // ipv4
+    arp.command = 0x0200; // "response"
+
+    arp.srcMAC = backend->GetMACAddress();
+    arp.srcIP = backend->GetIPAddress();
+    arp.dstMAC = Resolve(IP_BE);
+    arp.dstIP = IP_BE;
+
+    this->Send(arp.dstMAC, (uint8_t*)&arp, sizeof(AddressResolutionProtocolMessage));
+
+}
+
 void AddressResolutionProtocol::RequestMACAddress(uint32_t IP_BE)
 {
 
