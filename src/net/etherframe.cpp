@@ -97,3 +97,8 @@ uint64_t EtherFrameProvider::GetMACAddress()
 {
     return backend->GetMACAddress();
 }
+
+uint32_t EtherFrameHandler::GetIPAddress()
+{
+    return backend->GetIPAddress();
+}

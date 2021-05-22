@@ -17,6 +17,8 @@ objects = obj/loader.o \
 		  obj/net/arp.o \
 		  obj/net/icmp.o \
 		  obj/net/ipv4.o \
+		  obj/net/udp.o \
+		  obj/net/tcp.o \
           obj/drivers/mouse.o \
 		  obj/drivers/driver.o \
 		  obj/drivers/ata.o \
@@ -29,6 +31,10 @@ run: kernel.iso
 	VBoxManage startvm 'GuyOS' &
 
 obj/%.o: src/%.cpp
+	mkdir -p $(@D)
+	gcc $(GCCPARAMS) -c -o $@ $<
+
+obj/%.o: src/%.c
 	mkdir -p $(@D)
 	gcc $(GCCPARAMS) -c -o $@ $<
 

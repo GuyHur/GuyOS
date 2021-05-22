@@ -1,39 +1,25 @@
 # GuyOS
-GuyOS is an operating system written from scratch,
-i am working on this project to learn more about kernel development,
-further improve my low-level programming. And learn more about computers in general.
+GuyOS is an operating system written in order to learn more about the inner workings of operating systems,
+kernel development and more.
 
-Pull requests are welcome!
 ## Screenshots
 
 ![Image of the OS with interrupts, keyboard&mouse](screenshot.png)
 
 ## Features
 * 32 bit Protected mode
-* Dynamic drivers support, to add more drivers in the future
-* Keyboard and mouse support
+* Dynamic drivers system
+* Keyboard and mouse drivers
 * Basic GUI framework
+* Networking
 * Multitasking
 * Memory Management
 
 
-## Requirements
-
-* Linux Host System(Tested on Ubuntu 20.04)
-
-* Make(apt-get install make)
-* g++
-* xorriso
-* grub-pc-bin
-* VirtualBox
-* binutils
-* libc6-dev-i386
-
-## Installation
+## Building
 Install required packages:
 ```bash
-sudo apt-get install g++ binutils libc6-dev-i386
-sudo apt-get install VirtualBox grub-pc-bin xorriso
+sudo apt-get install g++ binutils libc6-dev-i386 VirtualBox grub-pc-bin xorriso
 ```
 Create a virtual machine without a hard drive.
 
@@ -51,41 +37,3 @@ Here are the goals for the future.
 * Support Networking
 * A better GUI Framework
 * Build an extended libc
-
-## Project Structure
-
-Self explaintory, project layout.
-
-### /include
-The include folder has all the header files.
-
-#### /drivers
-header files for drivers are here
-
-#### /hardware
-includes interrupt header files, hardware ports, PCI.
-
-#### /common
-Has the types.h header.
-
-### /src
-Contains all the source code for the project.
-
-#### /hardware
-Source code for hardware management, (interrupts, PCI, and more)
-
-#### kernel.cpp
-The main kernel function, here everything is initialized and the main routine kernelMain
-
-#### gdt.cpp
-Code for the GDT(Global descriptor table)
-
-#### multitasking.cpp
-Multitasking
-
-#### /drivers
-Source code for the drivers
-
-## Known issues
-- When building in other operating systems then ubuntu, sometimes grub-pc-bin creates an empty/malfunctioning ISO image.
-- QEMU/VMware sometimes boot into the OS and sometimes not.

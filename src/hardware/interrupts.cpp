@@ -21,9 +21,9 @@ void printfHex(uint8_t);
 
 InterruptHandler::InterruptHandler(InterruptManager* interruptManager, uint8_t InterruptNumber)
 {
-    this->InterruptNumber = InterruptNumber;
-    this->interruptManager = interruptManager;
-    interruptManager->handlers[InterruptNumber] = this;
+    this->InterruptNumber = InterruptNumber;//sets the interrupt number
+    this->interruptManager = interruptManager;// sets the interrupt manager
+    interruptManager->handlers[InterruptNumber] = this;// sets the handler to the interrupt as the address to the function
 }
 
 InterruptHandler::~InterruptHandler()

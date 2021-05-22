@@ -131,5 +131,5 @@ uint16_t InternetProtocolProvider::Checksum(uint16_t* data, uint32_t lengthInByt
     while(temp & 0xFFFF0000)
         temp = (temp & 0xFFFF) + (temp >> 16);
 
-    return ((~temp & 0xFF00) >> 8) | ((temp & 0x00FF) << 8);
+    return ((~temp & 0xFF00) >> 8) | ((~temp & 0x00FF) << 8);
 }

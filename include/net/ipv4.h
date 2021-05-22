@@ -32,7 +32,7 @@ namespace guyos
 
             common::uint32_t srcIP;
             common::uint32_t dstIP;
-        }__attribute__((packed));
+        } __attribute__((packed));
 
 
 
