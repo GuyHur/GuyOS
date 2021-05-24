@@ -27,6 +27,32 @@ using namespace guyos::drivers;
 using namespace guyos::hardware;
 using namespace guyos::net;
 
+#define VGA_WIDTH 80
+#define VGA_MEMORY (uint8_t*)0xB8000
+
+void kprintf(const char* str, unsigned char color)
+{
+    uint8_t* charPtr = (uint8_t*)str;
+    uint16_t index = 0;
+    while(*charPtr)
+    {
+        switch (*charPtr)
+        {
+        case 10:
+            index += VGA_WIDTH;
+            break;
+        case 13:
+            index -= index % VGA_WIDTH;
+            break;
+        default:
+            *(VGA_MEMORY + index * 2) = *charPtr;
+            *(VGA_MEMORY + index * 2 + 1) = color;
+            index++;
+        }
+        charPtr++;
+    }
+};
+
 
 void printf(char* str)
 {
@@ -99,6 +125,23 @@ public:
             foo[0] = data[i];
             printf(foo);
         }
+
+        if(size > 9
+            && data[0] == 'G'
+            && data[1] == 'E'
+            && data[2] == 'T'
+            && data[3] == ' '
+            && data[4] == '/'
+            && data[5] == ' '
+            && data[6] == 'H'
+            && data[7] == 'T'
+            && data[8] == 'T'
+            && data[9] == 'P'
+        )
+        {
+            socket->Send((uint8_t*)"HTTP/1.1 200 OK\r\nServer: GuyOS\r\nContent-Type: text/html\r\n\r\n<html><head><title>GuyOS</title></head><body><b>GuyOS</b></body></html>\r\n",131);
+            socket->Disconnect();
+        }  
 
         return true;
     }
@@ -174,13 +217,13 @@ void sysprintf(char *str)
 void taskA()
 {
     while(true)
-        sysprintf("alon");
+        sysprintf("USERMODE: Hello");
 }
 
 void taskB()
 {
     while(true)
-        sysprintf("noob");
+        sysprintf("USERMODE: World");
 }
 
 
@@ -329,6 +372,9 @@ extern "C" void kernelMain(const void *multiboot_structure, uint32_t /*multiboot
 
     //UserDatagramProtocolSocket* udpsocket = udp.Listen(1234);
     //udp.Bind(udpsocket, &udphandler);
+
+    kprintf("Test KERNELPRINTF\n\r", 0xC0 | 0x0B);
+
 
     while(1);
 }

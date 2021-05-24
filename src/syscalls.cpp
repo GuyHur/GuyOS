@@ -20,7 +20,12 @@ void printf(char*);
 uint32_t SyscallHandler::HandleInterrupt(uint32_t esp)
 {
     CPUState* cpu = (CPUState*)esp;
+    /*
+    eax holds the action.
 
+    TODO: create more cases by this list:
+    http://vm.ru54.com/asm/derick_tut/syscalls.html 
+    */
 
     switch(cpu->eax)
     {
