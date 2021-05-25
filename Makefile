@@ -13,16 +13,16 @@ objects = obj/loader.o \
 		  obj/drivers/amd_am79c973.o \
 		  obj/hardware/pci.o \
           obj/drivers/keyboard.o \
+		  obj/drivers/mouse.o \
+		  obj/drivers/driver.o \
+		  obj/drivers/ata.o \
+		  obj/drivers/vga.o \
 		  obj/net/etherframe.o \
 		  obj/net/arp.o \
 		  obj/net/icmp.o \
 		  obj/net/ipv4.o \
 		  obj/net/udp.o \
 		  obj/net/tcp.o \
-          obj/drivers/mouse.o \
-		  obj/drivers/driver.o \
-		  obj/drivers/ata.o \
-		  obj/drivers/vga.o \
           obj/kernel.o
 
 

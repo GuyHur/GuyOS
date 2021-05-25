@@ -42,4 +42,16 @@ void clear_screen(uint32_t clear_color= (BACKGROUND_BLACK | FOREGROUND_WHITE))
     };
 };
 
+unsigned short cursor_pos; 
+
+void set_cursor_pos(unsigned short position)
+{
+    outb(0x3D4, 0x0F);
+    outb(0x3D5, (unsigned char)(position & 0xFF));
+    outb(0x3D4, 0x0E);
+    outb(0x3D5, (unsigned char)((position >> 8) & 0xFF));
+    
+    cursor_pos = position;
+};
+
 

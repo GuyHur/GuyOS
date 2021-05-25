@@ -38,10 +38,10 @@ void kprintf(const char* str, unsigned char color)
     {
         switch (*charPtr)
         {
-        case 10:
+        case 10:// \n
             index += VGA_WIDTH;
             break;
-        case 13:
+        case 13:// \r
             index -= index % VGA_WIDTH;
             break;
         default:
@@ -93,11 +93,11 @@ void printf(char* str)
 
 void printfHex(uint8_t key)
 {
-    char* foo = "00";
+    char* buffer = "00";
     char* hex = "0123456789ABCDEF";
-    foo[0] = hex[(key >> 4) & 0xF];
-    foo[1] = hex[key & 0xF];
-    printf(foo);
+    buffer[0] = hex[(key >> 4) & 0xF];
+    buffer[1] = hex[key & 0xF];
+    printf(buffer);
 }
 
 void printfHex16(uint16_t key)
@@ -119,11 +119,11 @@ class PrintfTCPHandler : public TransmissionControlProtocolHandler
 public:
     bool HandleTransmissionControlProtocolMessage(TransmissionControlProtocolSocket* socket, common::uint8_t* data, common::uint16_t size)
     {
-        char* foo = " ";
+        char* buf = " ";
         for(int i = 0; i < size; i++)
         {
-            foo[0] = data[i];
-            printf(foo);
+            buf[0] = data[i];
+            printf(buf);
         }
 
         if(size > 9
@@ -139,7 +139,7 @@ public:
             && data[9] == 'P'
         )
         {
-            socket->Send((uint8_t*)"HTTP/1.1 200 OK\r\nServer: GuyOS\r\nContent-Type: text/html\r\n\r\n<html><head><title>GuyOS</title></head><body><b>GuyOS</b></body></html>\r\n",131);
+            socket->Send((uint8_t*)"HTTP/1.1 200 OK\r\nServer: GuyOS\r\nContent-Type: text/html\r\n\r\n<html><head><title>GuyOS</title></head><body><b>GuyOS</b></body></html>\r\n",150);
             socket->Disconnect();
         }  
 
@@ -152,9 +152,9 @@ class PrintfKeyboardEventHandler : public KeyboardEventHandler
 public:
     void OnKeyDown(char c)
     {
-        char* foo = " ";
-        foo[0] = c;   
-        printf(foo);
+        char* buffer = " ";
+        buffer[0] = c;   
+        printf(buffer);
     }
 };
 
@@ -199,16 +199,16 @@ class PrintfUDPHandler : public UserDatagramProtocolHandler
     public:
         void HandleUserDatagramProtocolMessage(UserDatagramProtocolSocket* socket, common::uint8_t* data, common::uint16_t size)
         {
-            char* foo = " ";
+            char* buffer = " ";
             for(int i = 0; i < size; i++)
             {
-                foo[0] = data[i];
-                printf(foo);
+                buffer[0] = data[i];
+                printf(buffer);
             }
         }   
 };
 
-void sysprintf(char *str)
+void sysprintf(const char *str)
 {
     asm("int $0x80" : : "a" (4), "b" (str));
 }
@@ -343,24 +343,25 @@ extern "C" void kernelMain(const void *multiboot_structure, uint32_t /*multiboot
                    | ((uint32_t)subnet3 << 16)
                    | ((uint32_t)subnet2 << 8)
                    | (uint32_t)subnet1;
+
+
     InternetProtocolProvider ipv4(&etherframe, &arp, gip_be, subnet_be); 
     InternetControlMessageProtocol icmp(&ipv4);   
     UserDatagramProtocolProvider udp(&ipv4);
     TransmissionControlProtocolProvider tcp(&ipv4);
-    //eth0->Send((uint8_t*)"Hello Network", 13);
 
 
     interrupts.Activate();
 
-    printf("\n\n\n\n\n\n\n\n\n\n");
+    printf("\n\n\n\n");
 
     arp.BroadcastMACAddress(gip_be);
 
-    tcp.Connect(gip_be, 1234);
     PrintfTCPHandler tcphandler;
-    TransmissionControlProtocolSocket* tcpsocket = tcp.Connect(gip_be, 1234);
+    TransmissionControlProtocolSocket* tcpsocket = tcp.Listen(12345);
     tcp.Bind(tcpsocket, &tcphandler);
-    tcpsocket->Send((uint8_t*)"Hello TCP!", 10);
+
+    //tcpsocket->Send((uint8_t*)"Hello TCP!", 10);
 
 
     //icmp.RequestEchoReply(gip_be);
@@ -373,7 +374,7 @@ extern "C" void kernelMain(const void *multiboot_structure, uint32_t /*multiboot
     //UserDatagramProtocolSocket* udpsocket = udp.Listen(1234);
     //udp.Bind(udpsocket, &udphandler);
 
-    kprintf("Test KERNELPRINTF\n\r", 0xC0 | 0x0B);
+    //kprintf("Test KERNELPRINTF\n\r", 0xC0 | 0x0B);
 
 
     while(1);

@@ -37,6 +37,7 @@
 #define BACKGROUND_BLINKINGYELLOW 0xE0
 #define BACKGROUND_BLINKINGWHITE 0xF0
 
+#include <lib/io.h>
 
 namespace guyos
 {
@@ -46,7 +47,7 @@ namespace guyos
 
         void clear_screen();
 
-        void set_cursor_pos(guyos::common::uint16_t position);
+        void set_cursor_pos(unsigned short position);
     }
     
 }
