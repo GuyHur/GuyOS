@@ -12,7 +12,7 @@ namespace guyos
     {
 
 
-        struct InternetControlMessageProtocolMessage
+        struct ICMPMessage
         {
             common::uint8_t type;
             common::uint8_t code;
@@ -20,16 +20,15 @@ namespace guyos
             common::uint16_t checksum;
             common::uint32_t data;
 
-        } __attribute__((packed));
+        }__attribute__((packed));
 
-        class InternetControlMessageProtocol : InternetProtocolHandler
+        class ICMP : IPHandler
         {
         public:
-            InternetControlMessageProtocol(InternetProtocolProvider* backend);
-            ~InternetControlMessageProtocol();
+            ICMP(IPProvider* backend);
+            ~ICMP();
 
-            bool OnInternetProtocolReceived(common::uint32_t srcIP_BE, common::uint32_t dstIP_BE,
-                                            common::uint8_t* internetprotocolPayload, common::uint32_t size);
+            bool OnIPReceived(common::uint32_t srcIP_BE, common::uint32_t dstIP_BE, common::uint8_t* IPPayload, common::uint32_t size);
             void RequestEchoReply(common::uint32_t ip_be);
         };
 

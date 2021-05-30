@@ -8,9 +8,9 @@
 /*
 
 Ethernet implementation
-dstMAC_BE -> Destination MAC address
-srcMAC_BE -> source MAC address
-etherType_BE -> type of the data for example:
+dstMAC_BE -> Destination MAC address in big endian encoding
+srcMAC_BE -> source MAC address in big endian encoding
+etherType_BE -> type of the etherframe, in big endian encoding.
 0x800 -> send the data to the ipv4 handler
 0x806 -> send the frame to the ARP handler
 */
@@ -24,14 +24,15 @@ namespace guyos
     {
         struct EtherFrameHeader
         {
-            common::uint64_t dstMAC_BE : 48;
-            common::uint64_t srcMAC_BE : 48;
+            common::uint64_t dstMAC_BE : 48;// only 6 bytes not 8... 15/5/21
+            common::uint64_t srcMAC_BE : 48;//only 6 bytes not 8... 15/5/21
             common::uint16_t etherType_BE;
         } __attribute__((packed));
         typedef common::uint32_t EtherFrameFooter;
 
         class EtherFrameProvider;
 
+        //Etherframe handler, this is the base class to be derived from.
         class EtherFrameHandler
         {
         protected:
@@ -39,13 +40,14 @@ namespace guyos
             common::uint16_t etherType_BE;
 
         public:
-            EtherFrameHandler(EtherFrameProvider* backend, common::uint16_t etherType);
-            ~EtherFrameHandler();
+            EtherFrameHandler(EtherFrameProvider* backend, common::uint16_t etherType);// constructor
+            ~EtherFrameHandler();//destructor
 
             virtual bool OnEtherFrameReceived(common::uint8_t* etherframePayload, common::uint32_t size);
             void Send(common::uint64_t dstMAC_BE, common::uint8_t* etherframePayload, common::uint32_t size);
             common::uint32_t GetIPAddress();
         };
+        //Etherframe Provider
         class EtherFrameProvider : public guyos::drivers::RawDataHandler
         {
         friend class EtherFrameHandler;

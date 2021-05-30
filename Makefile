@@ -22,6 +22,9 @@ objects = obj/loader.o \
 		  obj/net/icmp.o \
 		  obj/net/ipv4.o \
 		  obj/net/udp.o \
+		  obj/gui/window.o \
+		  obj/gui/widget.o \
+		  obj/gui/desktop.o \
 		  obj/net/tcp.o \
           obj/kernel.o
 

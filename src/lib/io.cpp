@@ -11,4 +11,5 @@ unsigned char inb(unsigned short port)
 {
     unsigned char data;
     asm volatile ("inb %1, %0" : "=a"(data) : "Nd"(port));
+    return data;
 }

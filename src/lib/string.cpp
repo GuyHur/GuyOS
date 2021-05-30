@@ -14,7 +14,7 @@ int strlen(const char *str)
         count++;
     }
     return count;
-};
+}
 
 int strncmp(const char *str, const char *str2, size_t n)
 {

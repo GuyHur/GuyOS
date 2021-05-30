@@ -20,38 +20,47 @@
 #include <net/icmp.h>
 #include <net/udp.h>
 
+#include <drivers/vga.h>
+#include <gui/desktop.h>
+#include <gui/window.h>
+
+#include <lib/system.h>
+
 
 using namespace guyos;
+using namespace guyos::gui;
 using namespace guyos::common;
 using namespace guyos::drivers;
 using namespace guyos::hardware;
 using namespace guyos::net;
 
-#define VGA_WIDTH 80
-#define VGA_MEMORY (uint8_t*)0xB8000
 
-void kprintf(const char* str, unsigned char color)
+
+
+
+uint8_t calculate_color(uint8_t foreground, uint8_t background)
 {
-    uint8_t* charPtr = (uint8_t*)str;
-    uint16_t index = 0;
-    while(*charPtr)
+    return foreground | (background << 4);
+}
+/*
+void init_shell()
+{
+    static uint8_t x=0, y= 0;
+    static uint8_t color = calculate_color(0x0F, 0x00);
+    static uint16_t* videoMemory = (uint16_t*)0xB8000;
+    for(uint8_t y=0; y < 80; y++)
     {
-        switch (*charPtr)
+        for(uint8_t x=0; x < 25; x++)
         {
-        case 10:// \n
-            index += VGA_WIDTH;
-            break;
-        case 13:// \r
-            index -= index % VGA_WIDTH;
-            break;
-        default:
-            *(VGA_MEMORY + index * 2) = *charPtr;
-            *(VGA_MEMORY + index * 2 + 1) = color;
-            index++;
+            const size_t index = y*80 + x;
+            videoMemory[index] = ((uint16_t)" " | (uint16_t) color << 8);
         }
-        charPtr++;
     }
-};
+}
+*/
+
+void kprintf(char* c);
+
 
 
 void printf(char* str)
@@ -68,6 +77,8 @@ void printf(char* str)
                 x = 0;
                 y++;
                 break;
+            case '\t':
+                x +=4;
             default:
                 VideoMemory[80*y+x] = (VideoMemory[80*y+x] & 0xFF00) | str[i];
                 x++;
@@ -114,10 +125,10 @@ void printfHex32(uint32_t key)
 }
 
 
-class PrintfTCPHandler : public TransmissionControlProtocolHandler
+class PrintfTCPHandler : public TCPHandler
 {
 public:
-    bool HandleTransmissionControlProtocolMessage(TransmissionControlProtocolSocket* socket, common::uint8_t* data, common::uint16_t size)
+    bool HandleTCPMessage(TCPSocket* socket, common::uint8_t* data, common::uint16_t size)
     {
         char* buf = " ";
         for(int i = 0; i < size; i++)
@@ -139,7 +150,8 @@ public:
             && data[9] == 'P'
         )
         {
-            socket->Send((uint8_t*)"HTTP/1.1 200 OK\r\nServer: GuyOS\r\nContent-Type: text/html\r\n\r\n<html><head><title>GuyOS</title></head><body><b>GuyOS</b></body></html>\r\n",150);
+            //FIXME: heartbleed String overwrite?
+            socket->Send((uint8_t*)"HTTP/1.1 200 OK\r\nServer: GuyOS\r\nContent-Type: text/html\r\n\r\n<html><head><title>GuyOS</title></head><body><b>GuyOS</b></body></html>\r\n",142);
             socket->Disconnect();
         }  
 
@@ -157,6 +169,11 @@ public:
         printf(buffer);
     }
 };
+
+void keyboardHandler(uint8_t scanCode, uint8_t chr)
+{
+
+}
 
 class MouseToConsole : public MouseEventHandler
 {
@@ -194,10 +211,10 @@ public:
     
 };
 
-class PrintfUDPHandler : public UserDatagramProtocolHandler
+class PrintfUDPHandler : public UDPHandler
 {
     public:
-        void HandleUserDatagramProtocolMessage(UserDatagramProtocolSocket* socket, common::uint8_t* data, common::uint16_t size)
+        void HandleUDPMessage(UDPSocket* socket, common::uint8_t* data, common::uint16_t size)
         {
             char* buffer = " ";
             for(int i = 0; i < size; i++)
@@ -208,7 +225,7 @@ class PrintfUDPHandler : public UserDatagramProtocolHandler
         }   
 };
 
-void sysprintf(const char *str)
+void sysprintf(char *str)
 {
     asm("int $0x80" : : "a" (4), "b" (str));
 }
@@ -217,20 +234,20 @@ void sysprintf(const char *str)
 void taskA()
 {
     while(true)
-        sysprintf("USERMODE: Hello");
+        sysprintf("Hello");
 }
 
 void taskB()
 {
     while(true)
-        sysprintf("USERMODE: World");
+        sysprintf("World");
 }
 
 
 typedef void (*constructor)();
 extern "C" constructor start_ctors;
 extern "C" constructor end_ctors;
-extern "C" void callConstructors()
+extern "C" void callConstructors()// enable the constructors
 {
     for (constructor *i = &start_ctors; i != &end_ctors; i++)
     {
@@ -242,10 +259,10 @@ extern "C" void kernelMain(const void *multiboot_structure, uint32_t /*multiboot
 {
     printf("Welcome to GuyOS!\n");
 
-    GlobalDescriptorTable gdt;
+    GlobalDescriptorTable gdt;// initialize the GDT
 
-    uint32_t* memupper = (uint32_t*)(((size_t)multiboot_structure) + 8);
-    size_t heap = 10*1024*1024;
+    uint32_t* memupper = (uint32_t*)(((size_t)multiboot_structure) + 8);// dynamic memory allocation
+    size_t heap = 10*1024*1024;// heap size
     MemoryManager memoryManager(heap, (*memupper)*1024 - heap - 10*1024);
 
     printf("heap: 0x");
@@ -262,37 +279,60 @@ extern "C" void kernelMain(const void *multiboot_structure, uint32_t /*multiboot
     printfHex(((size_t)allocated      ) & 0xFF);
     printf("\n");
 
-    TaskManager taskManager;
-    
-    //Task task1(&gdt, taskA);
-    //Task task2(&gdt, taskB);
-    //taskManager.AddTask(&task1);
-    //taskManager.AddTask(&task2);
-    
+    TaskManager taskManager;// initialize task manager
+    //Show Task Manager
+    /*
+    Task task1(&gdt, taskA);
+    Task task2(&gdt, taskB);
+    taskManager.AddTask(&task1);
+    taskManager.AddTask(&task2);
+    */
     InterruptManager interrupts(0x20, &gdt, &taskManager);//interrupt manager
     SyscallHandler syscalls(&interrupts, 0x80);// syscalls
 
-    printf("Initializing Hardware, Stage 1\n");
+    printf("Initializing Hardware...\n");
+    #ifdef GRAPHICSMODE
+        Desktop desktop(320,200, 0x00,0x00,0xA8);
+    #endif
+    
+    DriverManager drvManager;
+    
+        #ifdef GRAPHICSMODE
+            KeyboardDriver keyboard(&interrupts, &desktop);
+        #else
+            PrintfKeyboardEventHandler kbhandler;
+            KeyboardDriver keyboard(&interrupts, &kbhandler);
+        #endif
+        drvManager.AddDriver(&keyboard);
+        
+    
+        #ifdef GRAPHICSMODE
+            MouseDriver mouse(&interrupts, &desktop);
+        #else
+            MouseToConsole mousehandler;
+            MouseDriver mouse(&interrupts, &mousehandler);
+        #endif
+        drvManager.AddDriver(&mouse);
+        
+        PeripheralComponentInterconnectController PCIController;
+        PCIController.SelectDrivers(&drvManager, &interrupts);
 
-    DriverManager drvManager;// driver manager
+        #ifdef GRAPHICSMODE
+            VideoGraphicsArray vga;
+        #endif
 
-    PrintfKeyboardEventHandler keyboardhandler;// keyboard terminal
-    KeyboardDriver keyboard(&interrupts, &keyboardhandler);//keyboard driver
-    drvManager.AddDriver(&keyboard);
-
-    MouseToConsole mousehandler;// mouse terminal
-    MouseDriver mouse(&interrupts, &mousehandler);// mouse driver
-    drvManager.AddDriver(&mouse);
-
-    PeripheralComponentInterconnectController PCIController;// PCI driver
-    PCIController.SelectDrivers(&drvManager, &interrupts);
-    VGA vga;// VGA driver
-
-    printf("Initializing hardware, stage 2\n");
+    printf("Finalizing Hardware...\n");
 
     drvManager.ActivateAll();
 
-    printf("Activating interrupts, stage 3 \n");
+    printf("Activating interrupts...\n");
+
+
+
+
+
+
+
     /*
     printf("\nS-ATA primary master: ");
     ATA ata0m(true, 0x1F0);
@@ -317,6 +357,12 @@ extern "C" void kernelMain(const void *multiboot_structure, uint32_t /*multiboot
     // fourth: 0x168
     */
 
+   //Networking...
+   //http://beej.us/guide/bgnet/ Network programming
+   //http://www.saminiir.com/lets-code-tcp-ip-stack-1-ethernet-arp/ // Building a Network stack
+
+
+
    //ip address
     amd_am79c973* eth0 = (amd_am79c973*)(drvManager.drivers[2]);
 
@@ -328,7 +374,7 @@ extern "C" void kernelMain(const void *multiboot_structure, uint32_t /*multiboot
 
     eth0->SetIPAddress(ip_be);
     EtherFrameProvider etherframe(eth0);
-    AddressResolutionProtocol arp(&etherframe);    
+    ARP arp(&etherframe);    
 
 
     //ip of default gateway
@@ -345,37 +391,48 @@ extern "C" void kernelMain(const void *multiboot_structure, uint32_t /*multiboot
                    | (uint32_t)subnet1;
 
 
-    InternetProtocolProvider ipv4(&etherframe, &arp, gip_be, subnet_be); 
-    InternetControlMessageProtocol icmp(&ipv4);   
-    UserDatagramProtocolProvider udp(&ipv4);
-    TransmissionControlProtocolProvider tcp(&ipv4);
+    IPProvider ipv4(&etherframe, &arp, gip_be, subnet_be); 
+    ICMP icmp(&ipv4);   
+    UDPProvider udp(&ipv4);
+    TCPProvider tcp(&ipv4);
 
 
     interrupts.Activate();
 
-    printf("\n\n\n\n");
-
+    printf("Initializing Networking Services...");
+    /*Show TCP
+    */ 
+    //Show ICMP
     arp.BroadcastMACAddress(gip_be);
 
     PrintfTCPHandler tcphandler;
-    TransmissionControlProtocolSocket* tcpsocket = tcp.Listen(12345);
+    TCPSocket* tcpsocket = tcp.Listen(12345);
     tcp.Bind(tcpsocket, &tcphandler);
+    
+    // END Show TCP
 
     //tcpsocket->Send((uint8_t*)"Hello TCP!", 10);
 
-
+    //Show ICMP
     //icmp.RequestEchoReply(gip_be);
 
-    //PrintfUDPHandler udphandler;
-    //UserDatagramProtocolSocket* udpsocket = udp.Connect(gip_be, 1234);
-    //udp.Bind(udpsocket, &udphandler);
-    //udpsocket->Send((uint8_t*)"Hello UDP!", 10);
+    /*Show UDP
+    PrintfUDPHandler udphandler;
+    UDPSocket* udpsocket = udp.Connect(gip_be, 1234);
+    udp.Bind(udpsocket, &udphandler);
+    udpsocket->Send((uint8_t*)"Hello UDP!", 10);
 
-    //UserDatagramProtocolSocket* udpsocket = udp.Listen(1234);
-    //udp.Bind(udpsocket, &udphandler);
+    UDPSocket* udpsocket = udp.Listen(1234);
+    udp.Bind(udpsocket, &udphandler);
+    */
+    //help_command();
 
-    //kprintf("Test KERNELPRINTF\n\r", 0xC0 | 0x0B);
+    
 
-
-    while(1);
+    while(1)
+    {
+        #ifdef GRAPHICSMODE
+            desktop.draw(&vga);
+        #endif
+    }
 }

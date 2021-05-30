@@ -7,36 +7,33 @@ using namespace guyos::net;
         
         
             
-InternetProtocolHandler::InternetProtocolHandler(InternetProtocolProvider* backend, uint8_t protocol)
+IPHandler::IPHandler(IPProvider* backend, uint8_t protocol)
 {
-    this->backend = backend;
-    this->ip_protocol = protocol;
+    this->backend = backend;//set backend
+    this->ip_protocol = protocol;// set protocol
     backend->handlers[protocol] = this;
 }
 
-InternetProtocolHandler::~InternetProtocolHandler()
+IPHandler::~IPHandler()
 {
-    if(backend->handlers[ip_protocol] == this)
+    if(backend->handlers[ip_protocol] == this)// if this object is an handler in the backend, delete this handler from the backend's handlers
         backend->handlers[ip_protocol] = 0;
 }
             
-bool InternetProtocolHandler::OnInternetProtocolReceived(uint32_t srcIP_BE, uint32_t dstIP_BE,
-                                            uint8_t* internetprotocolPayload, uint32_t size)
+bool IPHandler::OnIPReceived(uint32_t srcIP_BE, uint32_t dstIP_BE, uint8_t* IPPayload, uint32_t size)
 {
-    return false;
+    return false;// receiving
 }
 
-void InternetProtocolHandler::Send(uint32_t dstIP_BE, uint8_t* internetprotocolPayload, uint32_t size)
+void IPHandler::Send(uint32_t dstIP_BE, uint8_t* IPPayload, uint32_t size)
 {
-    backend->Send(dstIP_BE, ip_protocol, internetprotocolPayload, size);
+    backend->Send(dstIP_BE, ip_protocol, IPPayload, size);//Send back from the base constructor
 }
 
 
      
 
-InternetProtocolProvider::InternetProtocolProvider(EtherFrameProvider* backend, 
-                                                   AddressResolutionProtocol* arp,
-                                                   uint32_t gatewayIP, uint32_t subnetMask)
+IPProvider::IPProvider(EtherFrameProvider* backend, ARP* arp, uint32_t gatewayIP, uint32_t subnetMask)
 : EtherFrameHandler(backend, 0x800)
 {
     for(int i = 0; i < 255; i++)
@@ -46,26 +43,26 @@ InternetProtocolProvider::InternetProtocolProvider(EtherFrameProvider* backend,
     this->subnetMask = subnetMask;
 }
 
-InternetProtocolProvider::~InternetProtocolProvider()
+IPProvider::~IPProvider()
 {
 }
             
-bool InternetProtocolProvider::OnEtherFrameReceived(uint8_t* etherframePayload, uint32_t size)
+bool IPProvider::OnEtherFrameReceived(uint8_t* etherframePayload, uint32_t size)
 {
-    if(size < sizeof(InternetProtocolV4Message))
+    if(size < sizeof(IPV4Message))
         return false;
     
-    InternetProtocolV4Message* ipmessage = (InternetProtocolV4Message*)etherframePayload;
+    IPV4Message* ipmessage = (IPV4Message*)etherframePayload;
     bool sendBack = false;
     
-    if(ipmessage->dstIP == backend->GetIPAddress())
+    if(ipmessage->dstIP == backend->GetIPAddress())// if the message is for my ip address
     {
         int length = ipmessage->totalLength;
         if(length > size)
-            length = size;
+            length = size;// heartbleed fix
         
-        if(handlers[ipmessage->protocol] != 0)
-            sendBack = handlers[ipmessage->protocol]->OnInternetProtocolReceived(
+        if(handlers[ipmessage->protocol] != 0)//check protocol handler
+            sendBack = handlers[ipmessage->protocol]->OnIPReceived(
                 ipmessage->srcIP, ipmessage->dstIP, 
                 etherframePayload + 4*ipmessage->headerLength, length - 4*ipmessage->headerLength);
         
@@ -86,31 +83,31 @@ bool InternetProtocolProvider::OnEtherFrameReceived(uint8_t* etherframePayload, 
 }
 
 
-void InternetProtocolProvider::Send(uint32_t dstIP_BE, uint8_t protocol, uint8_t* data, uint32_t size)
+void IPProvider::Send(uint32_t dstIP_BE, uint8_t protocol, uint8_t* data, uint32_t size)
 {
     
-    uint8_t* buffer = (uint8_t*)MemoryManager::activeMemoryManager->malloc(sizeof(InternetProtocolV4Message) + size);
-    InternetProtocolV4Message *message = (InternetProtocolV4Message*)buffer;
+    uint8_t* buffer = (uint8_t*)MemoryManager::activeMemoryManager->malloc(sizeof(IPV4Message) + size);// mem alloc
+    IPV4Message *message = (IPV4Message*)buffer;// cast to IPV4 msg
     
-    message->version = 4;
-    message->headerLength = sizeof(InternetProtocolV4Message)/4;
-    message->tos = 0;
-    message->totalLength = size + sizeof(InternetProtocolV4Message);
+    message->version = 4;// set version to 4
+    message->headerLength = sizeof(IPV4Message)/4;//header len
+    message->tos = 0;//type of service
+    message->totalLength = size + sizeof(IPV4Message);// total length
     message->totalLength = ((message->totalLength & 0xFF00) >> 8)
-                         | ((message->totalLength & 0x00FF) << 8);
-    message->ident = 0x0100;
-    message->flagsAndOffset = 0x0040;
-    message->timeToLive = 0x40;
-    message->protocol = protocol;
+                         | ((message->totalLength & 0x00FF) << 8);//big endian
+    message->ident = 0x0100;//identification
+    message->flagsAndOffset = 0x0040;//flags, no fragmentation
+    message->timeToLive = 0x40;// ttl
+    message->protocol = protocol;// protocol 
     
-    message->dstIP = dstIP_BE;
-    message->srcIP = backend->GetIPAddress();
+    message->dstIP = dstIP_BE;// destination ip
+    message->srcIP = backend->GetIPAddress();// my ip
     
-    message->checksum = 0;
-    message->checksum = Checksum((uint16_t*)message, sizeof(InternetProtocolV4Message));
+    message->checksum = 0;// checksum initialization
+    message->checksum = Checksum((uint16_t*)message, sizeof(IPV4Message));//calculate checksum
     
-    uint8_t* databuffer = buffer + sizeof(InternetProtocolV4Message);
-    for(int i = 0; i < size; i++)
+    uint8_t* databuffer = buffer + sizeof(IPV4Message);
+    for(int i = 0; i < size; i++)++
         databuffer[i] = data[i];
     
     uint32_t route = dstIP_BE;
@@ -118,15 +115,18 @@ void InternetProtocolProvider::Send(uint32_t dstIP_BE, uint8_t protocol, uint8_t
         route = gatewayIP;
     
 
-    backend->Send(arp->Resolve(route), this->etherType_BE, buffer, sizeof(InternetProtocolV4Message) + size);
+    backend->Send(arp->Resolve(route), this->etherType_BE, buffer, sizeof(IPV4Message) + size);
     
     
     MemoryManager::activeMemoryManager->free(buffer);
 }
 
 
-uint16_t InternetProtocolProvider::Checksum(uint16_t* data, uint32_t lengthInBytes)
+uint16_t IPProvider::Checksum(uint16_t* data, uint32_t lengthInBytes)
 {
+    /*
+    Calculates the checksum
+    */
     uint32_t temp = 0;
 
     for(int i = 0; i < lengthInBytes/2; i++)

@@ -8,7 +8,6 @@
 /*
 Handler for the ipv4 ethernet frame.
 
-
 */
 
 namespace guyos
@@ -16,7 +15,7 @@ namespace guyos
     namespace net
     {
 
-        struct InternetProtocolV4Message
+        struct IPV4Message
         {
             common::uint8_t headerLength : 4;
             common::uint8_t version : 4;
@@ -36,44 +35,44 @@ namespace guyos
 
 
 
-        class InternetProtocolProvider;
+        class IPProvider;
 
-        class InternetProtocolHandler
+        class IPHandler
         {
         protected:
-            InternetProtocolProvider* backend;
+            IPProvider* backend;
             common::uint8_t ip_protocol;
 
         public:
-            InternetProtocolHandler(InternetProtocolProvider* backend, common::uint8_t protocol);
-            ~InternetProtocolHandler();
+            IPHandler(IPProvider* backend, common::uint8_t protocol);//constructor
+            ~IPHandler();//destructor
 
-            virtual bool OnInternetProtocolReceived(common::uint32_t srcIP_BE, common::uint32_t dstIP_BE,
-                                            common::uint8_t* internetprotocolPayload, common::uint32_t size);
-            void Send(common::uint32_t dstIP_BE, common::uint8_t* internetprotocolPayload, common::uint32_t size);
+            virtual bool OnIPReceived(common::uint32_t srcIP_BE, common::uint32_t dstIP_BE,
+                                            common::uint8_t* IPPayload, common::uint32_t size);// upon receiving an IP packet
+            void Send(common::uint32_t dstIP_BE, common::uint8_t* IPPayload, common::uint32_t size);// handler send
         };
 
 
-        class InternetProtocolProvider : public EtherFrameHandler
+        class IPProvider : public EtherFrameHandler
         {
-        friend class InternetProtocolHandler;
+        friend class IPHandler;
         protected:
-            InternetProtocolHandler* handlers[255];
-            AddressResolutionProtocol* arp;
-            common::uint32_t gatewayIP;
-            common::uint32_t subnetMask;
+            IPHandler* handlers[255];// handlers
+            ARP* arp;//ARP
+            common::uint32_t gatewayIP;// default gateway ip address
+            common::uint32_t subnetMask;// subnet mask
 
         public:
-            InternetProtocolProvider(EtherFrameProvider* backend, 
-                                     AddressResolutionProtocol* arp,
-                                     common::uint32_t gatewayIP, common::uint32_t subnetMask);
-            ~InternetProtocolProvider();
+            IPProvider(EtherFrameProvider* backend, 
+                                     ARP* arp,
+                                     common::uint32_t gatewayIP, common::uint32_t subnetMask);// provider constructor
+            ~IPProvider();// provider destructor
 
-            bool OnEtherFrameReceived(common::uint8_t* etherframePayload, common::uint32_t size);
+            bool OnEtherFrameReceived(common::uint8_t* etherframePayload, common::uint32_t size);// ethernet frame backwords
 
-            void Send(common::uint32_t dstIP_BE, common::uint8_t protocol, common::uint8_t* buffer, common::uint32_t size);
+            void Send(common::uint32_t dstIP_BE, common::uint8_t protocol, common::uint8_t* buffer, common::uint32_t size);//Provider Send
 
-            static common::uint16_t Checksum(common::uint16_t* data, common::uint32_t lengthInBytes);
+            static common::uint16_t Checksum(common::uint16_t* data, common::uint32_t lengthInBytes);// calculates the checksum
         };        
     }
 }

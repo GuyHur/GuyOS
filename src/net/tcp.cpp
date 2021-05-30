@@ -6,15 +6,15 @@ using namespace guyos::net;
 
 
 
-TransmissionControlProtocolHandler::TransmissionControlProtocolHandler()
+TCPHandler::TCPHandler()
 {
 }
 
-TransmissionControlProtocolHandler::~TransmissionControlProtocolHandler()
+TCPHandler::~TCPHandler()
 {
 }
 
-bool TransmissionControlProtocolHandler::HandleTransmissionControlProtocolMessage(TransmissionControlProtocolSocket* socket, uint8_t* data, uint16_t size)
+bool TCPHandler::HandleTCPMessage(TCPSocket* socket, uint8_t* data, uint16_t size)
 {
     return true;
 }
@@ -23,43 +23,46 @@ bool TransmissionControlProtocolHandler::HandleTransmissionControlProtocolMessag
 
 
 
-TransmissionControlProtocolSocket::TransmissionControlProtocolSocket(TransmissionControlProtocolProvider* backend)
+TCPSocket::TCPSocket(TCPProvider* backend)
 {
+    /*
+    Initial state of the Socket
+    */
     this->backend = backend;
     handler = 0;
     state = CLOSED;
 }
 
-TransmissionControlProtocolSocket::~TransmissionControlProtocolSocket()
+TCPSocket::~TCPSocket()
 {
 }
 
-bool TransmissionControlProtocolSocket::HandleTransmissionControlProtocolMessage(uint8_t* data, uint16_t size)
+bool TCPSocket::HandleTCPMessage(uint8_t* data, uint16_t size)
 {
-    if(handler != 0)
-        return handler->HandleTransmissionControlProtocolMessage(this, data, size);
+    if(handler != 0)// if handler does not exist
+        return handler->HandleTCPMessage(this, data, size);
     return false;
 }
 
-void TransmissionControlProtocolSocket::Send(uint8_t* data, uint16_t size)
+void TCPSocket::Send(uint8_t* data, uint16_t size)
 {
     while(state != ESTABLISHED)
     {
     }
-    backend->Send(this, data, size, PSH|ACK);
+    backend->Send(this, data, size, PSH|ACK);// call the base class Send
 }
 
-void TransmissionControlProtocolSocket::Disconnect()
+void TCPSocket::Disconnect()
 {
-    backend->Disconnect(this);
+    backend->Disconnect(this);// call the base class Disconnect
 }
 
 
 
 
 
-TransmissionControlProtocolProvider::TransmissionControlProtocolProvider(InternetProtocolProvider* backend)
-: InternetProtocolHandler(backend, 0x06)
+TCPProvider::TCPProvider(IPProvider* backend)
+: IPHandler(backend, 0x06)
 {
     for(int i = 0; i < 65535; i++)
         sockets[i] = 0;
@@ -67,7 +70,7 @@ TransmissionControlProtocolProvider::TransmissionControlProtocolProvider(Interne
     freePort = 1024;
 }
 
-TransmissionControlProtocolProvider::~TransmissionControlProtocolProvider()
+TCPProvider::~TCPProvider()
 {
 }
 
@@ -81,20 +84,20 @@ uint32_t bigEndian32(uint32_t x)
 }
 
 
-bool TransmissionControlProtocolProvider::OnInternetProtocolReceived(uint32_t srcIP_BE, uint32_t dstIP_BE,
-                                        uint8_t* internetprotocolPayload, uint32_t size)
+bool TCPProvider::OnIPReceived(uint32_t srcIP_BE, uint32_t dstIP_BE,
+                                        uint8_t* IPPayload, uint32_t size)
 {
 
 
     if(size < 20)
         return false;
 
-    TransmissionControlProtocolHeader* msg = (TransmissionControlProtocolHeader*)internetprotocolPayload;
+    TCPHeader* msg = (TCPHeader*)IPPayload;
     uint16_t localPort = msg->dstPort;
     uint16_t remotePort = msg->srcPort;
 
 
-    TransmissionControlProtocolSocket* socket = 0;
+    TCPSocket* socket = 0;
     for(uint16_t i = 0; i < numSockets && socket == 0; i++)
     {
         if( sockets[i]->localPort == msg->dstPort
@@ -207,13 +210,13 @@ bool TransmissionControlProtocolProvider::OnInternetProtocolReceived(uint32_t sr
 
                 if(bigEndian32(msg->sequenceNumber) == socket->acknowledgementNumber)
                 {
-                    reset = !(socket->HandleTransmissionControlProtocolMessage(internetprotocolPayload + msg->headerSize32*4,
+                    reset = !(socket->HandleTCPMessage(IPPayload + msg->headerSize32*4,
                                                                               size - msg->headerSize32*4));
                     if(!reset)
                     {
                         int x = 0;
                         for(int i = msg->headerSize32*4; i < size; i++)
-                            if(internetprotocolPayload[i] != 0)
+                            if(IPPayload[i] != 0)
                                 x = i;
                         socket->acknowledgementNumber += x - msg->headerSize32*4 + 1;
                         Send(socket, 0,0, ACK);
@@ -237,7 +240,7 @@ bool TransmissionControlProtocolProvider::OnInternetProtocolReceived(uint32_t sr
         }
         else
         {
-            TransmissionControlProtocolSocket socket(this);
+            TCPSocket socket(this);
             socket.remotePort = msg->srcPort;
             socket.remoteIP = srcIP_BE;
             socket.localPort = msg->dstPort;
@@ -266,17 +269,17 @@ bool TransmissionControlProtocolProvider::OnInternetProtocolReceived(uint32_t sr
 
 
 
-void TransmissionControlProtocolProvider::Send(TransmissionControlProtocolSocket* socket, uint8_t* data, uint16_t size, uint16_t flags)
+void TCPProvider::Send(TCPSocket* socket, uint8_t* data, uint16_t size, uint16_t flags)
 {
-    uint16_t totalLength = size + sizeof(TransmissionControlProtocolHeader);
-    uint16_t lengthInclPHdr = totalLength + sizeof(TransmissionControlProtocolPseudoHeader);
+    uint16_t totalLength = size + sizeof(TCPHeader);// length of the TCP header + the size of the packet
+    uint16_t lengthInclPHdr = totalLength + sizeof(TCPPseudoHeader);//totalLength + pseudo header(src ip, port length and protocol)
 
-    uint8_t* buffer = (uint8_t*)MemoryManager::activeMemoryManager->malloc(lengthInclPHdr);
-    TransmissionControlProtocolPseudoHeader* phdr = (TransmissionControlProtocolPseudoHeader*)buffer;
-    TransmissionControlProtocolHeader* msg = (TransmissionControlProtocolHeader*)(buffer + sizeof(TransmissionControlProtocolPseudoHeader));
-    uint8_t* buffer2 = buffer + sizeof(TransmissionControlProtocolHeader)
-                              + sizeof(TransmissionControlProtocolPseudoHeader);
-    msg->headerSize32 = sizeof(TransmissionControlProtocolHeader)/4;
+    uint8_t* buffer = (uint8_t*)MemoryManager::activeMemoryManager->malloc(lengthInclPHdr);// allocated memory for the packet
+    TCPPseudoHeader* phdr = (TCPPseudoHeader*)buffer;//casting to pseudo header
+    TCPHeader* msg = (TCPHeader*)(buffer + sizeof(TCPPseudoHeader));// actual msg
+    uint8_t* buffer2 = buffer + sizeof(TCPHeader)
+                              + sizeof(TCPPseudoHeader);
+    msg->headerSize32 = sizeof(TCPHeader)/4;
     msg->srcPort = socket->localPort;
     msg->dstPort = socket->remotePort;
     msg->acknowledgementNumber = bigEndian32( socket->acknowledgementNumber );
@@ -293,28 +296,28 @@ void TransmissionControlProtocolProvider::Send(TransmissionControlProtocolSocket
     for(int i = 0; i < size; i++)
         buffer2[i] = data[i];
 
-    phdr->srcIP = socket->localIP;
-    phdr->dstIP = socket->remoteIP;
-    phdr->protocol = 0x0600;
-    phdr->totalLength = ((totalLength & 0x00FF) << 8) | ((totalLength & 0xFF00) >> 8);    
+    phdr->srcIP = socket->localIP;// local ip
+    phdr->dstIP = socket->remoteIP;// remote ip
+    phdr->protocol = 0x0600;// tcp handler id
+    phdr->totalLength = ((totalLength & 0x00FF) << 8) | ((totalLength & 0xFF00) >> 8);// total length of the packet    
 
-    msg->checksum = 0;
-    msg->checksum = InternetProtocolProvider::Checksum((uint16_t*)buffer, lengthInclPHdr);
+    msg->checksum = 0;// checksum
+    msg->checksum = IPProvider::Checksum((uint16_t*)buffer, lengthInclPHdr);// calc checksum
 
-    InternetProtocolHandler::Send(socket->remoteIP, (uint8_t*)msg, totalLength);
+    IPHandler::Send(socket->remoteIP, (uint8_t*)msg, totalLength);//send back to IP
 
-    MemoryManager::activeMemoryManager->free(buffer);
+    MemoryManager::activeMemoryManager->free(buffer);// frees the memory allocated before.
 }
 
 
 
-TransmissionControlProtocolSocket* TransmissionControlProtocolProvider::Connect(uint32_t ip, uint16_t port)
+TCPSocket* TCPProvider::Connect(uint32_t ip, uint16_t port)
 {
-    TransmissionControlProtocolSocket* socket = (TransmissionControlProtocolSocket*)MemoryManager::activeMemoryManager->malloc(sizeof(TransmissionControlProtocolSocket));
+    TCPSocket* socket = (TCPSocket*)MemoryManager::activeMemoryManager->malloc(sizeof(TCPSocket));
 
     if(socket != 0)
     {
-        new (socket) TransmissionControlProtocolSocket(this);
+        new (socket) TCPSocket(this);
 
         socket -> remotePort = port;
         socket -> remoteIP = ip;
@@ -337,7 +340,7 @@ TransmissionControlProtocolSocket* TransmissionControlProtocolProvider::Connect(
 
 
 
-void TransmissionControlProtocolProvider::Disconnect(TransmissionControlProtocolSocket* socket)
+void TCPProvider::Disconnect(TCPSocket* socket)
 {
     socket->state = FIN_WAIT1;
     Send(socket, 0,0, FIN + ACK);
@@ -345,13 +348,13 @@ void TransmissionControlProtocolProvider::Disconnect(TransmissionControlProtocol
 }
 
 
-TransmissionControlProtocolSocket* TransmissionControlProtocolProvider::Listen(uint16_t port)
+TCPSocket* TCPProvider::Listen(uint16_t port)
 {
-    TransmissionControlProtocolSocket* socket = (TransmissionControlProtocolSocket*)MemoryManager::activeMemoryManager->malloc(sizeof(TransmissionControlProtocolSocket));
+    TCPSocket* socket = (TCPSocket*)MemoryManager::activeMemoryManager->malloc(sizeof(TCPSocket));
 
     if(socket != 0)// if socket exists
     {
-        new (socket) TransmissionControlProtocolSocket(this);
+        new (socket) TCPSocket(this);
 
         socket -> state = LISTEN;
         socket -> localIP = backend->GetIPAddress();
@@ -362,7 +365,7 @@ TransmissionControlProtocolSocket* TransmissionControlProtocolProvider::Listen(u
 
     return socket;
 }
-void TransmissionControlProtocolProvider::Bind(TransmissionControlProtocolSocket* socket, TransmissionControlProtocolHandler* handler)
+void TCPProvider::Bind(TCPSocket* socket, TCPHandler* handler)
 {
     socket->handler = handler;
 }

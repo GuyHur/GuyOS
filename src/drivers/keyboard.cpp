@@ -19,9 +19,6 @@ void KeyboardEventHandler::OnKeyUp(char)
 }
 
 
-
-
-
 KeyboardDriver::KeyboardDriver(InterruptManager* manager, KeyboardEventHandler *handler)
 :InterruptHandler(manager, 0x21),
 dataport(0x60),
@@ -30,6 +27,19 @@ commandport(0x64)
     this->handler = handler;
 }
 
+/**
+ *  Keyboard Encoder
+ *   port 0x60 with Read -> Read input buffer
+ *   port 0x60 with Write -> Send command
+ * Onboard Keyboard Controller
+ * port 0x64 with Read -> Status register
+ * port 0x64 with Write -> send command, bit 0 is the output buffer status
+ * bit 1 is input buffer status
+ * 
+ * 
+ * 
+ * */
+
 
 KeyboardDriver::~KeyboardDriver()
 {
@@ -37,20 +47,20 @@ KeyboardDriver::~KeyboardDriver()
 
 void KeyboardDriver::Activate()
 {
-    while(commandport.Read() & 0x1)
+    while(commandport.Read() & 0x1)// clear the keyboard buffer
         dataport.Read();
-    commandport.Write(0xae); // activate interrupts
+    commandport.Write(0xae); // Enables the keyboard
     commandport.Write(0x20); // command 0x20 = read controller command byte
-    uint8_t status = (dataport.Read() | 1) & ~0x10;
-    commandport.Write(0x60); // command 0x60 = set controller command byte
+    uint8_t status = (dataport.Read() | 1) & ~0x10;// read the status of the data port
+    commandport.Write(0x60); // command 0x60 = Write command byte, afterwards we change the state of data port
     dataport.Write(status);
-    dataport.Write(0xf4);
+    dataport.Write(0xf4);// Enable keyboard encoder command
 }
 
 void printf(char*);
 void printfHex(uint8_t);
 
-uint32_t KeyboardDriver::HandleInterrupt(uint32_t esp)
+uint32_t KeyboardDriver::HandleInterrupt(uint32_t esp)// Handles the key presses and releases
 {
     uint8_t key = dataport.Read();
 
@@ -105,6 +115,8 @@ uint32_t KeyboardDriver::HandleInterrupt(uint32_t esp)
             case 0x35: handler->OnKeyDown('-'); break;
 
             case 0x1C: handler->OnKeyDown('\n'); break;
+            case 0x0F: handler->OnKeyDown('\t'); break;
+
             case 0x39: handler->OnKeyDown(' '); break;
 
             default:

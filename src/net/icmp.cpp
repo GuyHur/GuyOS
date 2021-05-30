@@ -5,24 +5,24 @@ using namespace guyos::common;
 using namespace guyos::net;
 
 
-InternetControlMessageProtocol::InternetControlMessageProtocol(InternetProtocolProvider* backend)
-: InternetProtocolHandler(backend, 0x01)
+ICMP::ICMP(IPProvider* backend)
+: IPHandler(backend, 0x01)
 {
 }
 
-InternetControlMessageProtocol::~InternetControlMessageProtocol()
+ICMP::~ICMP()
 {
 }
 
 void printf(char*);
 void printfHex(uint8_t);
-bool InternetControlMessageProtocol::OnInternetProtocolReceived(common::uint32_t srcIP_BE, common::uint32_t dstIP_BE,
-                                            common::uint8_t* internetprotocolPayload, common::uint32_t size)
+bool ICMP::OnIPReceived(common::uint32_t srcIP_BE, common::uint32_t dstIP_BE,
+                                            common::uint8_t* IPPayload, common::uint32_t size)
 {
-    if(size < sizeof(InternetControlMessageProtocolMessage))
+    if(size < sizeof(ICMPMessage))
         return false;
 
-    InternetControlMessageProtocolMessage* msg = (InternetControlMessageProtocolMessage*)internetprotocolPayload;
+    ICMPMessage* msg = (ICMPMessage*)IPPayload;
 
     switch(msg->type)
     {
@@ -38,23 +38,23 @@ bool InternetControlMessageProtocol::OnInternetProtocolReceived(common::uint32_t
         case 8:
             msg->type = 0;
             msg->checksum = 0;
-            msg->checksum = InternetProtocolProvider::Checksum((uint16_t*)msg,
-                sizeof(InternetControlMessageProtocolMessage));
+            msg->checksum = IPProvider::Checksum((uint16_t*)msg,
+                sizeof(ICMPMessage));
             return true;
     }
 
     return false;
 }
 
-void InternetControlMessageProtocol::RequestEchoReply(uint32_t ip_be)
+void ICMP::RequestEchoReply(uint32_t ip_be)
 {
-    InternetControlMessageProtocolMessage icmp;
+    ICMPMessage icmp;
     icmp.type = 8; // ping
     icmp.code = 0;
     icmp.data = 0x3713; // 1337
     icmp.checksum = 0;
-    icmp.checksum = InternetProtocolProvider::Checksum((uint16_t*)&icmp,
-        sizeof(InternetControlMessageProtocolMessage));
+    icmp.checksum = IPProvider::Checksum((uint16_t*)&icmp,
+        sizeof(ICMPMessage));
 
-    InternetProtocolHandler::Send(ip_be, (uint8_t*)&icmp, sizeof(InternetControlMessageProtocolMessage));
+    IPHandler::Send(ip_be, (uint8_t*)&icmp, sizeof(ICMPMessage));
 }

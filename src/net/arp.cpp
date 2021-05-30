@@ -4,23 +4,23 @@ using namespace guyos::common;
 using namespace guyos::net;
 using namespace guyos::drivers;
 
-
-AddressResolutionProtocol::AddressResolutionProtocol(EtherFrameProvider* backend)
+//Constructor, backend is the
+ARP::ARP(EtherFrameProvider* backend)
 :  EtherFrameHandler(backend, 0x806)
 {
     numCacheEntries = 0;
 }
 
-AddressResolutionProtocol::~AddressResolutionProtocol()
+ARP::~ARP()
 {
 }
 
-bool AddressResolutionProtocol::OnEtherFrameReceived(uint8_t* etherframePayload, uint32_t size)
+bool ARP::OnEtherFrameReceived(uint8_t* etherframePayload, uint32_t size)
 {
-    if(size < sizeof(AddressResolutionProtocolMessage))
+    if(size < sizeof(ARPMessage))
         return false;
 
-    AddressResolutionProtocolMessage* arp = (AddressResolutionProtocolMessage*)etherframePayload;
+    ARPMessage* arp = (ARPMessage*)etherframePayload;
     if(arp->hardwareType == 0x0100)
     {
 
@@ -58,9 +58,9 @@ bool AddressResolutionProtocol::OnEtherFrameReceived(uint8_t* etherframePayload,
     return false;
 }
 
-void AddressResolutionProtocol::BroadcastMACAddress(uint32_t IP_BE)
+void ARP::BroadcastMACAddress(uint32_t IP_BE)
 {
-    AddressResolutionProtocolMessage arp;
+    ARPMessage arp;
     arp.hardwareType = 0x0100; // ethernet
     arp.protocol = 0x0008; // ipv4
     arp.hardwareAddressSize = 6; // mac
@@ -72,14 +72,14 @@ void AddressResolutionProtocol::BroadcastMACAddress(uint32_t IP_BE)
     arp.dstMAC = Resolve(IP_BE);
     arp.dstIP = IP_BE;
 
-    this->Send(arp.dstMAC, (uint8_t*)&arp, sizeof(AddressResolutionProtocolMessage));
+    this->Send(arp.dstMAC, (uint8_t*)&arp, sizeof(ARPMessage));
 
 }
 
-void AddressResolutionProtocol::RequestMACAddress(uint32_t IP_BE)
+void ARP::RequestMACAddress(uint32_t IP_BE)
 {
 
-    AddressResolutionProtocolMessage arp;
+    ARPMessage arp;
     arp.hardwareType = 0x0100; // ethernet
     arp.protocol = 0x0008; // ipv4
     arp.hardwareAddressSize = 6; // mac
@@ -91,11 +91,11 @@ void AddressResolutionProtocol::RequestMACAddress(uint32_t IP_BE)
     arp.dstMAC = 0xFFFFFFFFFFFF; // broadcast
     arp.dstIP = IP_BE;
 
-    this->Send(arp.dstMAC, (uint8_t*)&arp, sizeof(AddressResolutionProtocolMessage));
+    this->Send(arp.dstMAC, (uint8_t*)&arp, sizeof(ARPMessage));
 
 }
 
-uint64_t AddressResolutionProtocol::GetMACFromCache(uint32_t IP_BE)
+uint64_t ARP::GetMACFromCache(uint32_t IP_BE)
 {
     for(int i = 0; i < numCacheEntries; i++)
         if(IPcache[i] == IP_BE)
@@ -103,7 +103,7 @@ uint64_t AddressResolutionProtocol::GetMACFromCache(uint32_t IP_BE)
     return 0xFFFFFFFFFFFF; // broadcast address
 }
 
-uint64_t AddressResolutionProtocol::Resolve(uint32_t IP_BE)
+uint64_t ARP::Resolve(uint32_t IP_BE)
 {
     uint64_t result = GetMACFromCache(IP_BE);
     if(result == 0xFFFFFFFFFFFF)

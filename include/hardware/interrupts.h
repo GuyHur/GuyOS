@@ -36,8 +36,8 @@ namespace guyos
         protected:
             guyos::common::uint8_t InterruptNumber;
             InterruptManager* interruptManager;
-            InterruptHandler(InterruptManager* interruptManager, guyos::common::uint8_t InterruptNumber);
-            ~InterruptHandler();
+            InterruptHandler(InterruptManager* interruptManager, guyos::common::uint8_t InterruptNumber);// so you cant initialize an interruptHandler
+            ~InterruptHandler();// or destroy it
         public:
             virtual guyos::common::uint32_t HandleInterrupt(guyos::common::uint32_t esp);
         };

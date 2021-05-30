@@ -10,7 +10,7 @@ namespace guyos
     namespace net
     {
 
-        struct AddressResolutionProtocolMessage
+        struct ARPMessage
         {
             common::uint16_t hardwareType;
             common::uint16_t protocol;
@@ -24,11 +24,11 @@ namespace guyos
             common::uint64_t dstMAC : 48;
             common::uint32_t dstIP;
 
-        } __attribute__((packed));
+        }__attribute__((packed));
 
 
 
-        class AddressResolutionProtocol : public EtherFrameHandler
+        class ARP : public EtherFrameHandler
         {
 
             common::uint32_t IPcache[128];
@@ -37,8 +37,8 @@ namespace guyos
 
 
         public:
-            AddressResolutionProtocol(EtherFrameProvider* backend);
-            ~AddressResolutionProtocol();
+            ARP(EtherFrameProvider* backend);
+            ~ARP();
 
             bool OnEtherFrameReceived(common::uint8_t* etherframePayload, common::uint32_t size);
 

@@ -19,15 +19,15 @@ namespace guyos
         class RawDataHandler
         {
         protected:
-            amd_am79c973* backend;
+            amd_am79c973* backend;//backend driver
         public:
-            RawDataHandler(amd_am79c973* backend);
-            ~RawDataHandler();
+            RawDataHandler(amd_am79c973* backend);//constructor
+            ~RawDataHandler();//destructor
 
-            virtual bool OnRawDataReceived(common::uint8_t* buffer, common::uint32_t size);
+            virtual bool OnRawDataReceived(common::uint8_t* buffer, common::uint32_t size);//handle raw data 
 
 
-            void Send(common::uint8_t* buffer, common::uint32_t size);
+            void Send(common::uint8_t* buffer, common::uint32_t size);// send raw data
         };
         
         class amd_am79c973 : public Driver, public hardware::InterruptHandler
@@ -80,20 +80,20 @@ namespace guyos
             
             
         public:
-            amd_am79c973(guyos::hardware::PeripheralComponentInterconnectDeviceDescriptor *dev, guyos::hardware::InterruptManager* interrupts);
-            ~amd_am79c973();
+            amd_am79c973(guyos::hardware::PeripheralComponentInterconnectDeviceDescriptor *dev, guyos::hardware::InterruptManager* interrupts);//constructor
+            ~amd_am79c973();// destructor
             
-            void Activate();
-            int Reset();
-            common::uint32_t HandleInterrupt(common::uint32_t esp);
+            void Activate();// activate the NIC
+            int Reset();// reset the NIC
+            common::uint32_t HandleInterrupt(common::uint32_t esp);// handle interrupt
             
-            void Send(common::uint8_t* buffer, int count);
-            void Receive();
+            void Send(common::uint8_t* buffer, int count);// send data
+            void Receive();// receive data
 
-            void SetHandler(RawDataHandler* handler);
-            common::uint64_t GetMACAddress();
-            void SetIPAddress(common::uint32_t);
-            common::uint32_t GetIPAddress();
+            void SetHandler(RawDataHandler* handler);// set the handler for handling raw data
+            common::uint64_t GetMACAddress();// get the mac address of the NIC
+            void SetIPAddress(common::uint32_t);//sets the IP address
+            common::uint32_t GetIPAddress();// gets the ip address
         };
         
         

@@ -39,7 +39,7 @@ uint32_t InterruptHandler::HandleInterrupt(uint32_t esp)
 
 
 
-InterruptManager::GateDescriptor InterruptManager::interruptDescriptorTable[256];
+InterruptManager::GateDescriptor InterruptManager::interruptDescriptorTable[256];// array of entries to the handlers in the IDT
 InterruptManager* InterruptManager::ActiveInterruptManager = 0;
 
 
@@ -151,7 +151,7 @@ uint16_t InterruptManager::HardwareInterruptOffset()
     return hardwareInterruptOffset;
 }
 
-void InterruptManager::Activate()
+void InterruptManager::Activate()// activate the current interrupt manager, in case there are multiple interrupt managers
 {
     if(ActiveInterruptManager != 0)
         ActiveInterruptManager->Deactivate();
@@ -160,7 +160,7 @@ void InterruptManager::Activate()
     asm("sti");
 }
 
-void InterruptManager::Deactivate()
+void InterruptManager::Deactivate()//deactivates the interrupt manager.
 {
     if(ActiveInterruptManager == this)
     {
@@ -179,9 +179,17 @@ uint32_t InterruptManager::HandleInterrupt(uint8_t interrupt, uint32_t esp)
 
 uint32_t InterruptManager::DoHandleInterrupt(uint8_t interrupt, uint32_t esp)
 {
-    if(handlers[interrupt] != 0)
+    /**
+    * if handlers[interrupt] contains for example a keyboard object, the HandleInterrupt(esp) in the keyboard class is called,
+    * otherwise it calls the HandleInterrupt(esp) in the InterruptHandler class, which just returns esp
+    * it has no relation with the HandleInterrupt that is called from interruptstubs
+    * 
+    * 
+    * 
+    **/
+    if(handlers[interrupt] != 0)// if an handler exists for this interrupt
     {
-        esp = handlers[interrupt]->HandleInterrupt(esp);
+        esp = handlers[interrupt]->HandleInterrupt(esp);// call its HandleInterrupt method
     }
     else if(interrupt != hardwareInterruptOffset)
     {
@@ -189,7 +197,7 @@ uint32_t InterruptManager::DoHandleInterrupt(uint8_t interrupt, uint32_t esp)
         printfHex(interrupt);
     }
 
-    if(interrupt == hardwareInterruptOffset)
+    if(interrupt == hardwareInterruptOffset)// timer interrupt 0x20
     {
         esp = (uint32_t) taskManager->Schedule((CPUState*)esp);
         //if interrupt is timer interrupt then let task manager call the scheduler to switch between tasks.

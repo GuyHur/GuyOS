@@ -8,6 +8,7 @@ using namespace guyos::drivers;
 
 EtherFrameHandler::EtherFrameHandler(EtherFrameProvider* backend, uint16_t etherType)
 {
+    //conversion from little endian to big endian.
     this->etherType_BE = ((etherType & 0x00FF) << 8)
                        | ((etherType & 0xFF00) >> 8);
     this->backend = backend;
@@ -19,7 +20,7 @@ EtherFrameHandler::~EtherFrameHandler()
     if(backend->handlers[etherType_BE] == this)
         backend->handlers[etherType_BE] = 0;
 }
-
+//this returns false because by default we don't want to send the data back, this will change later on
 bool EtherFrameHandler::OnEtherFrameReceived(common::uint8_t* etherframePayload, common::uint32_t size)
 {
     return false;
@@ -38,20 +39,20 @@ EtherFrameProvider::EtherFrameProvider(amd_am79c973* backend)
 : RawDataHandler(backend)
 {
     for(uint32_t i = 0; i < 65535; i++)
-        handlers[i] = 0;
+        handlers[i] = 0;//null all the handlers
 }
 
 EtherFrameProvider::~EtherFrameProvider()
 {
 }
-
+// by default we don't send it back.
 bool EtherFrameProvider::OnRawDataReceived(common::uint8_t* buffer, common::uint32_t size)
 {
     if(size < sizeof(EtherFrameHeader))
         return false;
     EtherFrameHeader* frame = (EtherFrameHeader*)buffer;
     bool sendBack = false;
-
+    //either a broadcast, or the frame is for my pc
     if(frame->dstMAC_BE == 0xFFFFFFFFFFFF
     || frame->dstMAC_BE == backend->GetMACAddress())
     {

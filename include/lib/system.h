@@ -37,20 +37,74 @@
 #define BACKGROUND_BLINKINGYELLOW 0xE0
 #define BACKGROUND_BLINKINGWHITE 0xF0
 
-#include <lib/io.h>
 
-namespace guyos
+using namespace guyos::common;
+
+void printf(char *str);
+
+void help_command()
 {
-    namespace lib
-    {
-        void kprintf(const char *str, unsigned char color);
-
-        void clear_screen();
-
-        void set_cursor_pos(unsigned short position);
-    }
-    
+    printf("\tGuyOS\n");
+    printf("$ Features:\n");
+    printf("$ Network Stack\n");
+    printf("$ Syscalls\n");
+    printf("$ Driver System\n");
+    printf("$ Multitasking\n");
+    printf("$ And more!\n");
 }
 
+void init_shell();
+
+void clear_screen()
+{
+    static uint16_t *VideoMemory = (uint16_t*)0xb8000;
+    static uint8_t x = 0, y = 0;
+    for(y = 0; y < 25; y++)
+    {
+        for(x = 0; x < 80; x++)
+        {
+            VideoMemory[80*y+x] = (VideoMemory[80*y+x] & 0xFF00) | ' ';
+        }
+    }
+}
+
+void kprintf(char* c)
+{
+    static uint8_t x=0, y=0;
+    static uint16_t* VideoMemory = (uint16_t*)0xb8000;
+
+    for(int i = 0; c[i] != '\0'; ++i)
+    {
+
+
+        switch (c[i])
+        {
+        case '\n':
+            x =0;
+            y++;
+            break;
+        case '\t':
+            x += 4;
+            
+        default:
+            VideoMemory[80*y+x] = (VideoMemory[80*y+x] & 0xFF00) | c[i];
+        }
+        if(x >= 80)
+        {
+            x = 0;
+            y++;
+        }
+
+        if(y >= 25)
+        {
+            for(y = 0; y < 25; y++)
+                for(x = 0; x < 80; x++)
+                    VideoMemory[80*y+x] = (VideoMemory[80*y+x] & 0xFF00) | ' ';//clears the entire screen
+            x = 0;
+            y = 0;
+        }
+
+    }
+};
 
 #endif

@@ -37,9 +37,9 @@ uint32_t SyscallHandler::HandleInterrupt(uint32_t esp)
     switch(cpu->eax)
     {
         case 4:
-            kprintf((const char*)cpu->ebx, 0x00 | 0x0F);
+            printf((char*)cpu->ebx);
+            //kprintf((const char*)cpu->ebx, 0x00 | 0x0F);
             break;
-
         default:
             break;
     }
