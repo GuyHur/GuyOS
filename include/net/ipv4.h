@@ -68,7 +68,7 @@ namespace guyos
                                      common::uint32_t gatewayIP, common::uint32_t subnetMask);// provider constructor
             ~IPProvider();// provider destructor
 
-            bool OnEtherFrameReceived(common::uint8_t* etherframePayload, common::uint32_t size);// ethernet frame backwords
+            bool OnEtherFrameReceived(common::uint8_t* etherframePayload, common::uint32_t size);// ethernet frame backwards
 
             void Send(common::uint32_t dstIP_BE, common::uint8_t protocol, common::uint8_t* buffer, common::uint32_t size);//Provider Send
 

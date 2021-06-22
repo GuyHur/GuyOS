@@ -24,12 +24,13 @@
 #include <gui/desktop.h>
 #include <gui/window.h>
 
-#include <lib/system.h>
+#include <lib/string.h>
 
 
 using namespace guyos;
 using namespace guyos::gui;
 using namespace guyos::common;
+
 using namespace guyos::drivers;
 using namespace guyos::hardware;
 using namespace guyos::net;
@@ -38,50 +39,33 @@ using namespace guyos::net;
 
 
 
-uint8_t calculate_color(uint8_t foreground, uint8_t background)
-{
-    return foreground | (background << 4);
-}
-/*
-void init_shell()
-{
-    static uint8_t x=0, y= 0;
-    static uint8_t color = calculate_color(0x0F, 0x00);
-    static uint16_t* videoMemory = (uint16_t*)0xB8000;
-    for(uint8_t y=0; y < 80; y++)
-    {
-        for(uint8_t x=0; x < 25; x++)
-        {
-            const size_t index = y*80 + x;
-            videoMemory[index] = ((uint16_t)" " | (uint16_t) color << 8);
-        }
-    }
-}
-*/
-
-void kprintf(char* c);
-
-
 
 void printf(char* str)
 {
-    static uint16_t* VideoMemory = (uint16_t*)0xb8000;
+    static uint16_t* VideoMemory = (uint16_t*)0xb8000;// VGA 80x25 text mode
 
-    static uint8_t x=0,y=0;
+    static uint8_t x=0,y=0;//cursor x, y pos
 
-    for(int i = 0; str[i] != '\0'; ++i)
+    for(int i = 0; str[i] != '\0'; ++i)// loop until null terminated string
     {
-        switch(str[i])
+        switch(str[i])// for each char
         {
-            case '\n':
+            case '\n':// if newline
                 x = 0;
                 y++;
                 break;
-            case '\t':
+            case '\t':// if tab
                 x +=4;
+                break;
+            case '\b':
+                x-=1;
+                VideoMemory[80*y+x] = (VideoMemory[80*y+x] & 0xFF00) | ' ';
+                
+                break;
+
             default:
-                VideoMemory[80*y+x] = (VideoMemory[80*y+x] & 0xFF00) | str[i];
-                x++;
+                VideoMemory[80*y+x] = (VideoMemory[80*y+x] & 0xFF00) | str[i];// print the char
+                x++;// increse cursor x pos
                 break;
         }
 
@@ -93,13 +77,25 @@ void printf(char* str)
 
         if(y >= 25)
         {
+            //clears the screen
+            //scroll_up()
             for(y = 0; y < 25; y++)
                 for(x = 0; x < 80; x++)
                     VideoMemory[80*y+x] = (VideoMemory[80*y+x] & 0xFF00) | ' ';
-            x = 0;
-            y = 0;
+            x = 0;// set cursor x to 0
+            y = 0;// set cursor y to 0
         }
     }
+}
+
+void user_input(char *input) {
+    if (strcmp(input, "end") == 0) {
+        printf("Stopping the CPU. Bye!\n");
+        asm volatile("hlt");
+    }
+    printf("You said: ");
+    printf(input);
+    printf("\n> ");
 }
 
 void printfHex(uint8_t key)
@@ -158,6 +154,7 @@ public:
         return true;
     }
 };
+
 
 class PrintfKeyboardEventHandler : public KeyboardEventHandler
 {
@@ -234,13 +231,13 @@ void sysprintf(char *str)
 void taskA()
 {
     while(true)
-        sysprintf("Hello");
+        sysprintf("[SYS]Hello");
 }
 
 void taskB()
 {
     while(true)
-        sysprintf("World");
+        sysprintf("[SYS]World");
 }
 
 
@@ -290,7 +287,7 @@ extern "C" void kernelMain(const void *multiboot_structure, uint32_t /*multiboot
     InterruptManager interrupts(0x20, &gdt, &taskManager);//interrupt manager
     SyscallHandler syscalls(&interrupts, 0x80);// syscalls
 
-    printf("Initializing Hardware...\n");
+    printf("[+]Initializing Hardware...\n");
     #ifdef GRAPHICSMODE
         Desktop desktop(320,200, 0x00,0x00,0xA8);
     #endif
@@ -321,11 +318,11 @@ extern "C" void kernelMain(const void *multiboot_structure, uint32_t /*multiboot
             VideoGraphicsArray vga;
         #endif
 
-    printf("Finalizing Hardware...\n");
+    printf("[+]Finalizing Hardware...\n");
 
     drvManager.ActivateAll();
 
-    printf("Activating interrupts...\n");
+    printf("[+]Activating interrupts...\n");
 
 
 
@@ -434,5 +431,6 @@ extern "C" void kernelMain(const void *multiboot_structure, uint32_t /*multiboot
         #ifdef GRAPHICSMODE
             desktop.draw(&vga);
         #endif
+        //terminal_update();
     }
 }

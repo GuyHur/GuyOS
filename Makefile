@@ -1,4 +1,5 @@
-GCCPARAMS = -m32 -Iinclude -fno-use-cxa-atexit -nostdlib -fno-builtin -fno-rtti -fno-exceptions -fno-leading-underscore -Wno-write-strings
+GCCPARAMS = -m32 -Iinclude -fno-use-cxa-atexit -nostdlib -fbuiltin -fno-rtti -fno-exceptions -fno-leading-underscore -Wno-write-strings
+# GCC C PARAMS -m32 -Iinclude -nostdlib -fbuiltin -fno-exceptions -fno-leading-underscore -Wno-write-strings
 ASPARAMS = --32
 LDPARAMS = -melf_i386
 
@@ -6,6 +7,7 @@ objects = obj/loader.o \
           obj/gdt.o \
 		  obj/memory.o \
           obj/hardware/port.o \
+		  obj/lib/string.o \
           obj/hardware/interruptstubs.o \
           obj/hardware/interrupts.o \
 		  obj/syscalls.o \

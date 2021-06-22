@@ -11,9 +11,10 @@ kernel development and more.
 * Dynamic drivers system
 * Keyboard and mouse drivers
 * Basic GUI framework
-* Networking
-* Multitasking
+* Full IP Stack
+* Preemitive Multitasking
 * Memory Management
+* Basic Terminal
 
 
 ## Building

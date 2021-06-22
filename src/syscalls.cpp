@@ -18,10 +18,6 @@ SyscallHandler::~SyscallHandler()
 void printf(char*);
 void kprintf(const char*, unsigned char);
 
-#define FOREGROUND_WHITE 0x0F
-
-#define BACKGROUND_BLACK 0x00
-
 uint32_t SyscallHandler::HandleInterrupt(uint32_t esp)
 {
     CPUState* cpu = (CPUState*)esp;

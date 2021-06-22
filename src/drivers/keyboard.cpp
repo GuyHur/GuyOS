@@ -60,6 +60,8 @@ void KeyboardDriver::Activate()
 void printf(char*);
 void printfHex(uint8_t);
 
+static char key_buffer[256];
+
 uint32_t KeyboardDriver::HandleInterrupt(uint32_t esp)// Handles the key presses and releases
 {
     uint8_t key = dataport.Read();
@@ -71,53 +73,61 @@ uint32_t KeyboardDriver::HandleInterrupt(uint32_t esp)// Handles the key presses
     {
         switch(key)
         {
-            case 0x02: handler->OnKeyDown('1'); break;
-            case 0x03: handler->OnKeyDown('2'); break;
-            case 0x04: handler->OnKeyDown('3'); break;
-            case 0x05: handler->OnKeyDown('4'); break;
-            case 0x06: handler->OnKeyDown('5'); break;
-            case 0x07: handler->OnKeyDown('6'); break;
-            case 0x08: handler->OnKeyDown('7'); break;
-            case 0x09: handler->OnKeyDown('8'); break;
-            case 0x0A: handler->OnKeyDown('9'); break;
-            case 0x0B: handler->OnKeyDown('0'); break;
+            case 0x02: handler->OnKeyDown('1');append(key_buffer, {'1'}); break;
+            case 0x03: handler->OnKeyDown('2');append(key_buffer, {'2'}); break;
+            case 0x04: handler->OnKeyDown('3');append(key_buffer, {'3'}); break;
+            case 0x05: handler->OnKeyDown('4');append(key_buffer, {'4'}); break;
+            case 0x06: handler->OnKeyDown('5');append(key_buffer, {'5'}); break;
+            case 0x07: handler->OnKeyDown('6');append(key_buffer, {'6'}); break;
+            case 0x08: handler->OnKeyDown('7');append(key_buffer, {'7'}); break;
+            case 0x09: handler->OnKeyDown('8');append(key_buffer, {'8'}); break;
+            case 0x0A: handler->OnKeyDown('9');append(key_buffer, {'9'}); break;
+            case 0x0B: handler->OnKeyDown('0');append(key_buffer, {'0'}); break;
 
-            case 0x10: handler->OnKeyDown('q'); break;
-            case 0x11: handler->OnKeyDown('w'); break;
-            case 0x12: handler->OnKeyDown('e'); break;
-            case 0x13: handler->OnKeyDown('r'); break;
-            case 0x14: handler->OnKeyDown('t'); break;
-            case 0x15: handler->OnKeyDown('z'); break;
-            case 0x16: handler->OnKeyDown('u'); break;
-            case 0x17: handler->OnKeyDown('i'); break;
-            case 0x18: handler->OnKeyDown('o'); break;
-            case 0x19: handler->OnKeyDown('p'); break;
+            case 0x10: handler->OnKeyDown('q');append(key_buffer, {'q'}); break;
+            case 0x11: handler->OnKeyDown('w');append(key_buffer, {'w'}); break;
+            case 0x12: handler->OnKeyDown('e');append(key_buffer, {'e'}); break;
+            case 0x13: handler->OnKeyDown('r');append(key_buffer, {'r'}); break;
+            case 0x14: handler->OnKeyDown('t');append(key_buffer, {'t'}); break;
+            case 0x15: handler->OnKeyDown('z');append(key_buffer, {'z'}); break;
+            case 0x16: handler->OnKeyDown('u');append(key_buffer, {'u'}); break;
+            case 0x17: handler->OnKeyDown('i');append(key_buffer, {'i'}); break;
+            case 0x18: handler->OnKeyDown('o');append(key_buffer, {'o'}); break;
+            case 0x19: handler->OnKeyDown('p');append(key_buffer, {'p'}); break;
 
-            case 0x1E: handler->OnKeyDown('a'); break;
-            case 0x1F: handler->OnKeyDown('s'); break;
-            case 0x20: handler->OnKeyDown('d'); break;
-            case 0x21: handler->OnKeyDown('f'); break;
-            case 0x22: handler->OnKeyDown('g'); break;
-            case 0x23: handler->OnKeyDown('h'); break;
-            case 0x24: handler->OnKeyDown('j'); break;
-            case 0x25: handler->OnKeyDown('k'); break;
-            case 0x26: handler->OnKeyDown('l'); break;
+            case 0x1E: handler->OnKeyDown('a');append(key_buffer, {'a'}); break;
+            case 0x1F: handler->OnKeyDown('s');append(key_buffer, {'s'}); break;
+            case 0x20: handler->OnKeyDown('d');append(key_buffer, {'d'}); break;
+            case 0x21: handler->OnKeyDown('f');append(key_buffer, {'f'}); break;
+            case 0x22: handler->OnKeyDown('g');append(key_buffer, {'g'}); break;
+            case 0x23: handler->OnKeyDown('h');append(key_buffer, {'h'}); break;
+            case 0x24: handler->OnKeyDown('j');append(key_buffer, {'j'}); break;
+            case 0x25: handler->OnKeyDown('k');append(key_buffer, {'k'}); break;
+            case 0x26: handler->OnKeyDown('l');append(key_buffer, {'l'}); break;
 
-            case 0x2C: handler->OnKeyDown('y'); break;
-            case 0x2D: handler->OnKeyDown('x'); break;
-            case 0x2E: handler->OnKeyDown('c'); break;
-            case 0x2F: handler->OnKeyDown('v'); break;
-            case 0x30: handler->OnKeyDown('b'); break;
-            case 0x31: handler->OnKeyDown('n'); break;
-            case 0x32: handler->OnKeyDown('m'); break;
-            case 0x33: handler->OnKeyDown(','); break;
-            case 0x34: handler->OnKeyDown('.'); break;
-            case 0x35: handler->OnKeyDown('-'); break;
+            case 0x2C: handler->OnKeyDown('y');append(key_buffer, {'y'}); break;
+            case 0x2D: handler->OnKeyDown('x');append(key_buffer, {'x'}); break;
+            case 0x2E: handler->OnKeyDown('c');append(key_buffer, {'c'}); break;
+            case 0x2F: handler->OnKeyDown('v');append(key_buffer, {'v'}); break;
+            case 0x30: handler->OnKeyDown('b');append(key_buffer, {'b'}); break;
+            case 0x31: handler->OnKeyDown('n');append(key_buffer, {'n'}); break;
+            case 0x32: handler->OnKeyDown('m');append(key_buffer, {'m'}); break;
+            case 0x33: handler->OnKeyDown(',');append(key_buffer, {','}); break;
+            case 0x34: handler->OnKeyDown('.');append(key_buffer, {'.'}); break;
+            case 0x35: handler->OnKeyDown('-');append(key_buffer, {'-'}); break;
 
-            case 0x1C: handler->OnKeyDown('\n'); break;
+            //Enter
+            case 0x1C: handler->OnKeyDown('\n'); user_input(key_buffer); key_buffer[0] = '\0'; break;
             case 0x0F: handler->OnKeyDown('\t'); break;
+            //backspace(delete)
+            case 0x0E: 
+                       backspace(key_buffer);
+                       handler->OnKeyDown('\b'); 
+                       break;
 
             case 0x39: handler->OnKeyDown(' '); break;
+
+            
 
             default:
             {

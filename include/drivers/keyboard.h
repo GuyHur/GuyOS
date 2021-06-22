@@ -6,6 +6,8 @@
     #include <common/types.h>
     #include <hardware/interrupts.h>
     #include <hardware/port.h>
+    #include <lib/string.h>
+
 namespace guyos
 {
 
@@ -31,11 +33,11 @@ namespace guyos
 
             KeyboardEventHandler *handler;
         public:
-            KeyboardDriver(guyos::hardware::InterruptManager* manager, KeyboardEventHandler *handler);
-            ~KeyboardDriver();
-            virtual guyos::common::uint32_t HandleInterrupt(guyos::common::uint32_t esp);
+            KeyboardDriver(guyos::hardware::InterruptManager* manager, KeyboardEventHandler *handler);// consturctor
+            ~KeyboardDriver();//destructor
+            virtual guyos::common::uint32_t HandleInterrupt(guyos::common::uint32_t esp);//handleInterrupt
 
-            virtual void Activate();
+            virtual void Activate();//activates the driver
         };
     }
 }
